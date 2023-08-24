@@ -193,7 +193,8 @@ def get_latest_df(data,df):
     temp_df = pd.DataFrame([candle_data], columns=[
                         'OpenTime', 'open', 'high', 'low', 'close', 'volume'])
     temp_df['OpenTime'] = temp_df['OpenTime'] / 1000  
-    temp_df['OpenTime'] = datetime.fromtimestamp(temp_df['OpenTime'])
+    temp_df['OpenTime'] = temp_df['OpenTime'].apply(lambda x: datetime.fromtimestamp(x))
+
     df = pd.concat([df, temp_df])
     cols = ['open', 'high', 'low', 'close', 'volume']
     for col in cols:
