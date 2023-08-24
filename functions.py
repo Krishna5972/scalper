@@ -4,6 +4,9 @@ import requests
 import time
 
 
+
+
+
 def get_max_leverage(coin: str, api_key: str, secret_key: str):
     base_url = "https://fapi.binance.com"
 
@@ -144,6 +147,69 @@ def atr(data, period,coin):
 
     return atr
 
+def supertrend_v2(coin, df, period, atr_multiplier):
+    hl2 = (df[f'high'] + df[f'low']) / 2
+    df['atr'] = atr(df, period, coin)
+    df['upperband'] = hl2 + (atr_multiplier * df['atr'])
+    df['lowerband'] = hl2 - (atr_multiplier * df['atr'])
+    df['in_uptrend'] = True
+    df['OpenTime'] = pd.to_datetime(df['OpenTime'])
+
+    for current in range(1, len(df.index)):
+        previous = current - 1
+        if df[f'close'].iloc[current] > df['upperband'].iloc[previous]:
+            df['in_uptrend'].iloc[current] = True
+        elif df[f'close'].iloc[current] < df['lowerband'].iloc[previous]:
+            df['in_uptrend'].iloc[current] = False
+        else:
+            df['in_uptrend'].iloc[current] = df['in_uptrend'].iloc[previous]
+
+        if df['in_uptrend'].iloc[current] and df['lowerband'].iloc[current] < df['lowerband'].iloc[previous]:
+            df['lowerband'].iloc[current] = df['lowerband'].iloc[previous]
+
+        if not df['in_uptrend'].iloc[current] and df['upperband'].iloc[current] > df['upperband'].iloc[previous]:
+            df['upperband'].iloc[current] = df['upperband'].iloc[previous]
+
+    return df
+
+
+import numpy as np
+from numba import njit
+
+@njit
+def compute_supertrend(close, upperband, lowerband, in_uptrend):
+    for current in range(1, len(close)):
+        previous = current - 1
+
+        if close[current] > upperband[previous]:
+            in_uptrend[current] = True
+        elif close[current] < lowerband[previous]:
+            in_uptrend[current] = False
+        else:
+            in_uptrend[current] = in_uptrend[previous]
+
+        if in_uptrend[current] and lowerband[current] < lowerband[previous]:
+            lowerband[current] = lowerband[previous]
+
+        if not in_uptrend[current] and upperband[current] > upperband[previous]:
+            upperband[current] = upperband[previous]
+
+    return in_uptrend, upperband, lowerband
+
+def supertrend_njit(coin, df, period, atr_multiplier):
+    hl2 = (df[f'high'] + df[f'low']) / 2
+    df['atr'] = atr(df, period, coin)
+    df['upperband'] = hl2 + (atr_multiplier * df['atr']).values
+    df['lowerband'] = hl2 - (atr_multiplier * df['atr']).values
+    in_uptrend = np.ones(len(df), dtype=bool)
+
+    in_uptrend, df['upperband'], df['lowerband'] = compute_supertrend(df[f'close'].values, df['upperband'].values, df['lowerband'].values, in_uptrend)
+
+    df['in_uptrend'] = in_uptrend
+    df['OpenTime'] = pd.to_datetime(df['OpenTime'])
+
+    return df
+
 
 
 def supertrend(coin,df, period, atr_multiplier):
@@ -154,30 +220,7 @@ def supertrend(coin,df, period, atr_multiplier):
     df['in_uptrend'] = True
     
     df['OpenTime']=pd.to_datetime(df['OpenTime'])
-    
-    df['size']=df.apply(candle_size,axis=1,coin=coin)
-    
-    df['ma_7']=talib.MA(df[f'close'], timeperiod=7)
-    df['ma_25']=talib.MA(df[f'close'], timeperiod=25)
-    df['ma_99']=talib.MA(df[f'close'], timeperiod=99)
-    df['ma_100']=talib.MA(df[f'close'], timeperiod=100)
-    df['ma_200']=talib.MA(df[f'close'], timeperiod=200)
-
-    
-
-    df['ema_55']=talib.EMA(df[f'close'],55)
-    df['ema_5']=talib.EMA(df[f'close'],5)
-    df['ema_10']=talib.EMA(df[f'close'],10)
-    df['ema_20']=talib.EMA(df[f'close'],20)
-    df['ema_33']=talib.EMA(df[f'close'],33)
-    df['ema_81']=talib.EMA(df[f'close'],81)
-    df['ema_100']=talib.EMA(df[f'close'],100)
-    df['ema_200']=talib.EMA(df[f'close'],200)
-    df['rsi'] = talib.RSI(df[f'close'], timeperiod=14)
-    df['macd'],df['macdsignal'],df['macdhist']=talib.MACD(df[f'close'], fastperiod=12, slowperiod=26, signalperiod=9)
-
-
-    df['slowk'], df['slowd'] = talib.STOCH(df[f'high'],df[f'low'],df[f'close'], fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
+   
 
     for current in range(1, len(df.index)):
         previous = current - 1
@@ -486,19 +529,6 @@ def create_signal_df(super_df,df,coin,timeframe,atr1,period,profit,sl):
     'hour',
     'minute','day',
     'month',
-    'size','ma_7','ma_25','ma_99',
-    'ma_100','ma_200','ema_81','ema_100','ema_100','ema_200',
-    'ema_55',
-    'ema_5',
-    'ema_10',
-    'ema_20',
-    'ema_33',
-    'rsi',
-    'macd',
-    'macdsignal',
-    'macdhist',
-    'slowk',
-    'slowd',
     'candle_count',
     'local_max','local_min',
     'local_max_bar','local_min_bar',
@@ -657,3 +687,5 @@ def supertrend_pivot(coin, df, period, atr_multiplier, pivot_period):
     df['lower_band'] = Tup
     df['upper_band'] = Tdown
     return df
+
+
