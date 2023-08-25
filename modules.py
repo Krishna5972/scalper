@@ -2,8 +2,8 @@ from functions import *
 
 class TradeConfiguration:
     def __init__(self):
-        self.buy_risk = 0.0123  #0.0213
-        self.sell_risk = 0.006  #0.0123
+        self.buy_risk = 0.02  #0.0213
+        self.sell_risk = 0.02  #0.0123
         
         
     def get_risk(self,over_all_trend,current_signal):
@@ -27,35 +27,53 @@ class PivotSuperTrendConfiguration():
         self.atr_multiplier = atr_multiplier
         self.pivot_period = pivot_period
         
+class TradeHistory():
+    def __init__(self):
+        self.order_ids = []
+
+    def add_order_id(self,order_id):
+        self.order_ids.append(order_id)
         
-        
+    def remove_order_id(self,order_id):
+        self.order_ids.remove(order_id)
+
+    def get_order_ids(self):
+        return self.order_ids
         
 class Order:
-    def __init__(self,coin,entry,quantity,round_price,take_profit = None , stop_loss = None):
+    def __init__(self,coin,entry,quantity,round_price,take_profit = None , stop_loss = None,change = None ,
+                  partial_profit_take = None, lowerband = None , upperband = None):
         self.coin = coin.upper()
         self.quantity = quantity
         self.take_profit = take_profit
         self.stop_loss = stop_loss
         self.entry = entry
         self.round_price = round_price
+        self.change = change
+        self.partial_profit_take = partial_profit_take
+        self.lowerband = lowerband
+        self.upperband = upperband
         
     def make_buy_trade(self,client):
         
-        
-        
         client.futures_create_order(symbol=f'{self.coin}USDT', side='BUY', type='MARKET', quantity=self.quantity, dualSidePosition=True, positionSide='LONG')
              
-        self.take_profit = self.entry+((self.entry*0.06))
+        if self.change == 'longTerm':
+            self.take_profit = self.entry+((self.entry*0.0213))
+        else:
+            self.take_profit = self.entry+((self.entry*0.06))
+
+        
         
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
                                     price=round(self.take_profit, self.round_price),
                                     side='SELL',
                                     positionSide='LONG',
-                                    quantity=self.quantity,
+                                    quantity=self.partial_profit_take,
                                     timeInForce='GTC',
                                     type='LIMIT',
-                                    # reduceOnly=True,
+                                    # reduceOnly=True,cc
                                     closePosition=False,
                                     # stopPrice=round(take_profit,2),
                                     workingType='MARK_PRICE',
@@ -75,7 +93,88 @@ class Order:
                                         positionSide='SHORT'
                                     )
         
-        self.take_profit = self.entry - ((self.entry * 0.0411))
+        if self.change == 'longTerm':
+            self.take_profit = self.entry-((self.entry*0.0213))
+        else:
+            self.take_profit = self.entry-((self.entry*0.0411))
+        
+        client.futures_create_order(
+                                    symbol=f'{self.coin}USDT',
+                                    price=round(self.take_profit, self.round_price),
+                                    side='BUY',
+                                    positionSide='SHORT',
+                                    quantity=self.partial_profit_take,
+                                    timeInForce='GTC',
+                                    type='LIMIT',
+                                    # reduceOnly=True,
+                                    closePosition=False,
+                                    # stopPrice=round(take_profit,2),
+                                    workingType='MARK_PRICE',
+                                    priceProtect=True
+                               )
+        
+        notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
+        notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
+        
+    def make_inverse_buy_trade(self,client):
+        client.futures_create_order(symbol=f'{self.coin}USDT', side='BUY', type='MARKET', quantity=self.quantity, dualSidePosition=True, positionSide='LONG')
+
+        difference = self.upperband - self.entry
+
+        self.take_profit = self.upperband 
+
+        stop_loss = self.entry - difference
+
+
+        client.futures_create_order(
+                                    symbol=f'{self.coin}USDT',
+                                    price=round(self.take_profit, self.round_price),
+                                    side='SELL',
+                                    positionSide='LONG',
+                                    quantity=self.quantity,
+                                    timeInForce='GTC',
+                                    type='LIMIT',
+                                    # reduceOnly=True,cc
+                                    closePosition=False,
+                                    # stopPrice=round(take_profit,2),
+                                    workingType='MARK_PRICE',
+                                    priceProtect=True
+                                )
+        
+        notifier(f'Placed Take Profit order for long position')
+
+        client.futures_create_order(
+                                    symbol=f'{self.coin}USDT',
+                                    side='SELL',
+                                    positionSide='LONG',
+                                    quantity=self.quantity,
+                                    type='STOP_MARKET',
+                                    stopPrice=round(stop_loss, self.round_price),
+                                    closePosition=True,
+                                    workingType='MARK_PRICE'
+                                    )
+        
+        notifier(f'Placed Take Stoploss market order for long position')
+
+
+
+        notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
+        notifier(f'Buy order placed for coin :{self.coin}, TP : {self.take_profit}')
+
+    def make_inverse_sell_trade(self,client):
+        client.futures_create_order(
+                                        symbol=f'{self.coin}USDT', side='SELL', 
+                                        type='MARKET',
+                                        quantity=self.quantity,
+                                        dualSidePosition=True, 
+                                        positionSide='SHORT'
+                                    )
+        
+        difference = self.entry - self.lowerband 
+
+        self.take_profit = self.lowerband 
+
+        stop_loss = self.entry + difference
         
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
@@ -92,7 +191,19 @@ class Order:
                                     priceProtect=True
                                )
         
+        notifier(f'Placed Take Profit order for short position')
+
+        client.futures_create_order(
+                                    symbol=f'{self.coin}USDT',
+                                    side='BUY',                   # Change to 'BUY' because you're covering a short position
+                                    positionSide='SHORT',        # Indicate that the position is a 'SHORT'
+                                    quantity=self.quantity,
+                                    type='STOP_MARKET',
+                                    stopPrice=round(stop_loss, self.round_price),
+                                    closePosition=True,
+                                    workingType='MARK_PRICE'
+                                )
+        
+        notifier(f'Placed Take Stoploss market order for short position')
         notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
         notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
-        
-    

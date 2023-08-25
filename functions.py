@@ -2,10 +2,12 @@ import hmac
 import hashlib
 import requests
 import time
+from binance.client import Client
 
+from data_extraction import *
+import config
 
-
-
+client=Client(config.api_key,config.secret_key)
 
 def get_max_leverage(coin: str, api_key: str, secret_key: str):
     base_url = "https://fapi.binance.com"
@@ -645,7 +647,7 @@ def supertrend_pivot(coin, df, period, atr_multiplier, pivot_period):
             if math.isnan(centers[-1]):
                 centers.append(lastpp)
             else:
-                center = round(((centers[-1] * 2) + lastpp)/3, 3)
+                center = round(((centers[-1] * 2) + lastpp)/3, 9)
                 centers.append(center)
         df.at[idx, 'center'] = center
 
@@ -689,3 +691,153 @@ def supertrend_pivot(coin, df, period, atr_multiplier, pivot_period):
     return df
 
 
+def get_prev_pivot_supertrend_signal(pivot_super_df):
+    trend= pivot_super_df.iloc[-2]['in_uptrend']
+    if trend == True:
+        return "Buy"
+    else:
+        return "Sell"
+    
+def get_signal(super_df):
+    signal = ['Buy' if super_df.iloc[-1]
+                                    ['in_uptrend'] == True else 'Sell'][0]
+    
+    return signal
+
+def get_prev_signal(super_df):
+    signal = ['Buy' if super_df.iloc[-2]
+                                    ['in_uptrend'] == True else 'Sell'][0]
+    
+    return signal
+
+
+def get_entry(super_df):
+    return super_df.iloc[-1]['close']
+
+def get_stake(super_df,client,risk = 0.02):
+    signal = get_signal(super_df)
+    entry = get_entry(super_df)
+    client._create_futures_api_uri = create_futures_api_uri_v2.__get__(client, Client)
+    acc_balance = round(float(client.futures_account()['totalCrossWalletBalance']), 2)
+    client._create_futures_api_uri = create_futures_api_uri_v1.__get__(client, Client)
+    stake = (acc_balance*0.88)
+    notifier(f'USDT : Allocated stake:{round(stake,2)}')
+    if signal == 'Buy':
+        sl = super_df.iloc[-1]['lowerband']
+        sl_perc = (entry-sl)/entry
+    else:
+        sl = super_df.iloc[-1]['upperband']
+        sl_perc = (sl-entry)/entry
+
+    stake = (stake*risk)/sl_perc
+    
+    return stake
+
+def get_over_all_trend(coin):
+    str_date = (datetime.now()- timedelta(days=20)).strftime('%b %d,%Y')
+    end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
+
+    df=dataextract(coin,str_date,end_str,'1d',client)
+    df['Date'] = pd.to_datetime(df['OpenTime'])
+    df.set_index('Date', inplace=True)
+
+    df['ROC_6'] = df['close'].pct_change(periods=6) * 100
+    df['ROC_EMA'] = df['ROC_6'].ewm(span=3, adjust=False).mean()
+
+    
+    latest_ROC_EMA = df['ROC_EMA'].iloc[-1]
+    if latest_ROC_EMA > 0:
+        trend = "Uptrend"
+    elif latest_ROC_EMA < 0:
+        trend = "Downtrend"
+    else:
+        trend = "Neutral"
+
+    print(f"Latest Rate of Change EMA: {latest_ROC_EMA:.2f}%")
+    print(f"Overall trend: {trend}")
+    
+    return trend
+
+def get_latest_df(data,df):
+    candle = data['k']
+    candle_data = [candle['t'], candle['o'],
+                candle['h'], candle['l'], candle['c'], candle['v']]
+    temp_df = pd.DataFrame([candle_data], columns=[
+                        'OpenTime', 'open', 'high', 'low', 'close', 'volume'])
+    temp_df['OpenTime'] = temp_df['OpenTime'] / 1000  
+    temp_df['OpenTime'] = temp_df['OpenTime'].apply(lambda x: datetime.fromtimestamp(x))
+
+    df = pd.concat([df, temp_df])
+    cols = ['open', 'high', 'low', 'close', 'volume']
+    for col in cols:
+        df[col] = df[col].astype(float)
+    
+    df = df.iloc[1:]
+    df.reset_index(drop=True,inplace=True)
+    return df
+
+def close_any_open_positions(coin,client):
+    client._create_futures_api_uri = create_futures_api_uri_v2.__get__(client, Client)
+    positions = client.futures_position_information(symbol=f'{coin}USDT')
+    client._create_futures_api_uri = create_futures_api_uri_v1.__get__(client, Client)
+    closed = 0
+  
+    for position in positions:
+        if float(position['positionAmt']) > 0:
+            closed = 1
+            client.futures_create_order(
+                symbol=f"{position['symbol']}",
+                side='SELL',
+                type='MARKET',
+                quantity=position['positionAmt'],
+                dualSidePosition=True,
+                positionSide='LONG'
+            )
+        elif float(position['positionAmt']) < 0:
+            closed = 1
+            client.futures_create_order(
+                symbol=f"{position['symbol']}",
+                side='BUY',
+                type='MARKET',
+                quantity=abs(float(position['positionAmt'])),
+                dualSidePosition=True,
+                positionSide='SHORT'
+            )
+
+    if closed == 0:
+        notifier(f'No positions to close : {coin}')
+
+
+def cancel_all_open_orders(coin,client):
+    orders = client.futures_get_open_orders(symbol=f'{coin}USDT')
+    for order in orders:
+        client.futures_cancel_order(symbol=order['symbol'], orderId=order['orderId'])
+
+def close_long_position(coin,client):
+    #close long position
+    client._create_futures_api_uri = create_futures_api_uri_v1.__get__(client, Client)
+    client.futures_create_order(
+                symbol=f'{coin}USDT', side='SELL', type='MARKET', quantity=100000, dualSidePosition=True, positionSide='LONG')
+    notifier(f'USDT : Long Position Closed {timeframe}')
+
+def close_short_position(coin,client):
+    #close short position
+    client._create_futures_api_uri = create_futures_api_uri_v1.__get__(client, Client)
+    client.futures_create_order(
+                symbol=f'{coin}USDT', side='BUY', type='MARKET', quantity=100000, dualSidePosition=True, positionSide='SHORT')
+    notifier(f'USDT : Short Position Closed {timeframe}') 
+
+
+def get_pivot_supertrend_signal(pivot_super_df):
+    trend= pivot_super_df.iloc[-1]['in_uptrend']
+    if trend == True:
+        return "Buy"
+    else:
+        return "Sell"
+    
+
+def get_lowerband(super_df):
+    return super_df.iloc[-1]['lowerband']
+
+def get_upperband(super_df):
+    return super_df.iloc[-1]['upperband']
