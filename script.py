@@ -38,6 +38,18 @@ coin = input("Please enter the coin name: ")
 
 print(f"You entered: {coin}")
 
+timeframe = get_timeframe()
+print(f"You've selected {timeframe}. Please reconfirm.")
+
+reconfirm = get_timeframe()
+
+if timeframe == reconfirm:
+    print(f"Thank you! Your timeframe of {timeframe} has been confirmed.")
+else:
+    print("The selections don't match. Please try again.")
+
+
+
 stream = f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}"
 
 

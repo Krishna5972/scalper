@@ -824,14 +824,28 @@ def close_long_position(coin,client):
     client._create_futures_api_uri = create_futures_api_uri_v1.__get__(client, Client)
     client.futures_create_order(
                 symbol=f'{coin}USDT', side='SELL', type='MARKET', quantity=100000, dualSidePosition=True, positionSide='LONG')
-    notifier(f'USDT : Long Position Closed {timeframe}')
+    notifier(f'USDT : Long Position Closed')
 
+def get_timeframe():
+    print("Please select a timeframe from the options below:")
+    options = ['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '1d']
+    for idx, option in enumerate(options, 1):
+        print(f"{idx}) {option}")
+    
+    selection = input("Enter the number corresponding to your choice: ")
+
+    # Validate user's selection
+    while not selection.isdigit() or int(selection) not in range(1, len(options)+1):
+        print("Invalid selection. Please select a valid timeframe.")
+        selection = input("Enter the number corresponding to your choice: ")
+
+    return options[int(selection) - 1]
 def close_short_position(coin,client):
     #close short position
     client._create_futures_api_uri = create_futures_api_uri_v1.__get__(client, Client)
     client.futures_create_order(
                 symbol=f'{coin}USDT', side='BUY', type='MARKET', quantity=100000, dualSidePosition=True, positionSide='SHORT')
-    notifier(f'USDT : Short Position Closed {timeframe}') 
+    notifier(f'USDT : Short Position Closed') 
 
 
 def get_pivot_supertrend_signal(pivot_super_df):
