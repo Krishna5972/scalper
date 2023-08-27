@@ -4,7 +4,7 @@ secret_key='Sl0uIdRWjrEn1ngBlkjHnWzvNUzZ5Z3guG9i9A3vLPbcqqFsqHHHtSpRqZk4V17k'
 
 
 
-timeframe ='1m'
+
 period = 14
 atr1 = 1.2
 
