@@ -144,6 +144,7 @@ async def on_message(message,df):
         df = get_latest_df(data, df)
         df_copy = df.copy()
         super_df=supertrend_njit(coin, df_copy, period, atr1)
+        ema = get_ema(super_df,'ema_81')
         
         print(f'Length of super_df : {super_df.shape[0]}')
         df_copy = df.copy()
@@ -170,12 +171,14 @@ async def on_message(message,df):
             over_all_trend = get_over_all_trend(coin)
             lowerband = get_lowerband(super_df)
             upperband = get_upperband(super_df)
+
+            ema = get_ema(super_df,'ema_81')
             
             tradeConfig = TradeConfiguration()
             risk = tradeConfig.get_risk(over_all_trend,signal)
             
             stake = get_stake(super_df,client,risk)
-            stake = 20
+            stake = 60
             quantity = round(stake/entry, round_quantity)
             partial_profit_take = round(quantity/2,round_quantity)
             
@@ -201,14 +204,14 @@ async def on_message(message,df):
                 order.make_buy_trade(client)   
                 notifier('No stoploss but take profit')
                 
-            elif pivot_signal == 'Buy' and signal == 'Sell' and change == 'shortTerm':
+            elif pivot_signal == 'Buy' and signal == 'Sell' and change == 'shortTerm' and entry > ema:
                 order.make_inverse_buy_trade(client)
                 notifier(f'Made a inverse trade should have stop loss and a take profit')
             
             elif pivot_signal == 'Sell' and signal == 'Sell':
                 order.make_sell_trade(client)
                 notifier('No stoploss but take profit')
-            elif pivot_signal == 'Sell' and signal == 'Buy' and change == 'shortTerm':
+            elif pivot_signal == 'Sell' and signal == 'Buy' and change == 'shortTerm' and entry < ema:
                 order.make_inverse_sell_trade(client)
                 notifier(f'Made a inverse trade should have stop loss and take profit')
                 

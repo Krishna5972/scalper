@@ -776,6 +776,12 @@ def get_latest_df(data,df):
     df.reset_index(drop=True,inplace=True)
     return df
 
+def get_ema(super_df,ema_condition = 'ema_81'):
+    ema_period = int(ema_condition.split('_')[1])
+    ema_series = talib.EMA(super_df['close'], ema_period)
+    return ema_series.iloc[-1]
+
+
 def close_any_open_positions(coin,client):
     client._create_futures_api_uri = create_futures_api_uri_v2.__get__(client, Client)
     positions = client.futures_position_information(symbol=f'{coin}USDT')
