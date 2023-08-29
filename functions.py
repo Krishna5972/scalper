@@ -771,7 +771,8 @@ def get_latest_df(data,df):
                         'OpenTime', 'open', 'high', 'low', 'close', 'volume'])
     temp_df['OpenTime'] = temp_df['OpenTime'] / 1000  
     temp_df['OpenTime'] = temp_df['OpenTime'].apply(lambda x: datetime.fromtimestamp(x))
-
+    if df['OpenTime'].iloc[-1] == temp_df['OpenTime'].iloc[-1]:
+        df = df[:-1]
     df = pd.concat([df, temp_df])
     cols = ['open', 'high', 'low', 'close', 'volume']
     for col in cols:
