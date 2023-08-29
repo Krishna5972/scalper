@@ -207,18 +207,22 @@ async def main(shared_coin,current_trade):
                 
                 if pivot_signal == 'Buy' and signal == 'Buy':  
                     order.make_buy_trade(client)   
-                    notifier('No stoploss but take profit')
                     
-                elif pivot_signal == 'Buy' and signal == 'Sell' and change == 'shortTerm' and entry > ema:
-                    order.make_inverse_buy_trade(client)
-                    notifier(f'Made a inverse trade should have stop loss and a take profit')
+                    
+                elif pivot_signal == 'Buy' and signal == 'Sell':
+                    order.quantity = round(order.quantity/2, current_trade.round_quantity)
+                    order.partial_profit_take = round(order.quantity/2,current_trade.round_quantity)
+                    order.make_sell_trade(client)
+                    
                 
                 elif pivot_signal == 'Sell' and signal == 'Sell':
                     order.make_sell_trade(client)
-                    notifier('No stoploss but take profit')
-                elif pivot_signal == 'Sell' and signal == 'Buy' and change == 'shortTerm' and entry < ema:
-                    order.make_inverse_sell_trade(client)
-                    notifier(f'Made a inverse trade should have stop loss and take profit')
+                    
+                elif pivot_signal == 'Sell' and signal == 'Buy':
+                    order.quantity = round(order.quantity/2, current_trade.round_quantity)
+                    order.partial_profit_take = round(order.quantity/2,current_trade.round_quantity)
+                    order.make_buy_trade(client)
+                    
                     
                 else:
                     notifier(f'Something is wrong...Debug')
