@@ -347,7 +347,7 @@ def run_async_main(shared_coin,current_trade):
 if __name__ == "__main__":
     
     coin = input("Please enter the coin name: ")
-    stake = float(input("enter the stake"))
+    stake = float(input("Enter the stake :"))
 
     timeframe = get_timeframe()
     print(f"You've selected {timeframe}. Please reconfirm.")
@@ -363,6 +363,9 @@ if __name__ == "__main__":
     manager = Manager()
     shared_coin = manager.Value(str, coin)
     shared_coin.value = coin
+
+    notifier_with_photo("data/saravanabhava.jpeg", "SARAVANA BHAVA")
+
     p1 = Process(target=fetch_volatile_coin, args=(shared_coin,))
     p2 = Process(target=run_async_main, args=(shared_coin,current_trade))
 
