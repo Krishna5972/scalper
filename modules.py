@@ -59,11 +59,12 @@ class Order:
         client.futures_create_order(symbol=f'{self.coin}USDT', side='BUY', type='MARKET', quantity=self.quantity, dualSidePosition=True, positionSide='LONG')
              
         if self.change == 'longTerm':
+            notifier(f'Pivot SuperTrend Changed')
             self.take_profit = self.entry+((self.entry*0.0213))
         else:
             self.take_profit = self.entry+((self.entry*0.06))
 
-        
+        notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
         
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
@@ -94,9 +95,12 @@ class Order:
                                     )
         
         if self.change == 'longTerm':
+            notifier(f'Pivot SuperTrend Changed')
             self.take_profit = self.entry-((self.entry*0.0213))
         else:
             self.take_profit = self.entry-((self.entry*0.0411))
+
+        notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
         
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
@@ -123,7 +127,7 @@ class Order:
 
         self.take_profit = self.upperband 
 
-        stop_loss = self.entry - difference
+        stop_loss = self.entry - (1.6 * difference)
 
 
         client.futures_create_order(
@@ -144,17 +148,17 @@ class Order:
         notifier(f'Placed Take Profit order for long position')
 
         client.futures_create_order(
-                                    symbol=f'{self.coin}USDT',
-                                    side='SELL',
-                                    positionSide='LONG',
-                                    quantity=self.quantity,
-                                    type='STOP_MARKET',
-                                    stopPrice=round(stop_loss, self.round_price),
-                                    closePosition=True,
-                                    workingType='MARK_PRICE'
-                                    )
+                            symbol=f'{self.coin}USDT',
+                            side='BUY',
+                            positionSide='LONG',
+                            price=round(stop_loss, self.round_price),  # Using stop_loss as the limit price for buying
+                            quantity=self.quantity,
+                            timeInForce='GTC',
+                            type='LIMIT',
+                            workingType='MARK_PRICE'
+                            )
         
-        notifier(f'Placed Take Stoploss market order for long position')
+        notifier(f'Placed Buy Limit order for long position at {round(stop_loss, self.round_price)}')
 
 
 
@@ -174,7 +178,7 @@ class Order:
 
         self.take_profit = self.lowerband 
 
-        stop_loss = self.entry + difference
+        stop_loss = self.entry + (1.6 * difference)
         
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
@@ -193,17 +197,41 @@ class Order:
         
         notifier(f'Placed Take Profit order for short position')
 
+        # client.futures_create_order(
+        #                             symbol=f'{self.coin}USDT',
+        #                             side='BUY',                   # Change to 'BUY' because you're covering a short position
+        #                             positionSide='SHORT',        # Indicate that the position is a 'SHORT'
+        #                             quantity=self.quantity,
+        #                             type='STOP_MARKET',
+        #                             stopPrice=round(stop_loss, self.round_price),
+        #                             closePosition=True,
+        #                             workingType='MARK_PRICE'
+        #                         )
+        
+
         client.futures_create_order(
-                                    symbol=f'{self.coin}USDT',
-                                    side='BUY',                   # Change to 'BUY' because you're covering a short position
-                                    positionSide='SHORT',        # Indicate that the position is a 'SHORT'
-                                    quantity=self.quantity,
-                                    type='STOP_MARKET',
-                                    stopPrice=round(stop_loss, self.round_price),
-                                    closePosition=True,
-                                    workingType='MARK_PRICE'
-                                )
+                            symbol=f'{self.coin}USDT',
+                            side='SELL',
+                            positionSide='LONG',
+                            price=round(stop_loss, self.round_price),  # Using sell_price as the limit price for selling
+                            quantity=self.quantity,
+                            timeInForce='GTC',
+                            type='LIMIT',
+                            workingType='MARK_PRICE'
+                            )
         
         notifier(f'Placed Take Stoploss market order for short position')
         notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
         notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
+
+class CurrentTrade:
+    def __init__(self,coin,stake,timeframe):
+        self.coin = coin
+        self.stake = stake
+        self.timeframe = timeframe
+
+    def get_current_coin(self):
+        return self.coin
+    
+    def set_current_coin(self,coin):
+        self.coin = coin
