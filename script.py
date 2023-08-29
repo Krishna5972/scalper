@@ -105,7 +105,7 @@ async def main(shared_coin,current_trade):
 
 
 
-    str_date = (datetime.now()- timedelta(days=5)).strftime('%b %d,%Y')
+    str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
     end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
 
     df=dataextract(coin,str_date,end_str,timeframe,client)
@@ -152,6 +152,7 @@ async def main(shared_coin,current_trade):
             print(f'Length of super_df : {super_df.shape[0]}')
             df_copy = df.copy()
             signal = get_signal(super_df)
+            super_df.to_csv('super_df.csv',index=False,mode='w+')
             current_signal = signal
             prev_signal = get_prev_signal(super_df)
 
@@ -253,7 +254,7 @@ async def main(shared_coin,current_trade):
             coin = shared_coin.value
             current_trade.set_current_coin(coin)
             notifier(f"Coin changed! Now trading {coin}.")
-            str_date = (datetime.now()- timedelta(days=5)).strftime('%b %d,%Y')
+            str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
             end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
 
             df=dataextract(coin,str_date,end_str,timeframe,client)
@@ -280,6 +281,7 @@ async def main(shared_coin,current_trade):
 
             current_trade.round_quantity = round_quantity
             
+        
 
             super_df=supertrend_njit(coin, df_copy, period, atr1)
             df_copy = df.copy()
