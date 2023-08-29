@@ -115,7 +115,7 @@ async def main(shared_coin,current_trade):
     decimal_index = x_str.find('.')
     round_price = len(x_str) - decimal_index - 1
 
-
+    current_trade.round_price = round_price
 
     exchange_info = client.futures_exchange_info()
 
@@ -124,6 +124,8 @@ async def main(shared_coin,current_trade):
             round_quantity = symbol['quantityPrecision']
             break
     df_copy = df.copy()
+
+    current_trade.round_quantity = round_quantity
 
     super_df=supertrend_njit(coin, df_copy, period, atr1)
     df_copy = df.copy()
@@ -200,6 +202,8 @@ async def main(shared_coin,current_trade):
                             lowerband = lowerband,
                             upperband = upperband
                             )
+                
+                notifier(f'round price : {order.round_price}')
                 
                 if pivot_signal == 'Buy' and signal == 'Buy':  
                     order.make_buy_trade(client)   
@@ -305,6 +309,8 @@ async def main(shared_coin,current_trade):
                         lowerband = lowerband,
                         upperband = upperband
                         )
+            
+            notifier(f'round price : {order.round_price}')
 
             if signal == "Buy":
                 order.make_buy_trade(client)  
@@ -364,6 +370,8 @@ if __name__ == "__main__":
         print(f"Thank you! Your timeframe of {timeframe} has been confirmed.")
     else:
         print("The selections don't match. Please try again.")
+
+    
 
     current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake)
     manager = Manager()

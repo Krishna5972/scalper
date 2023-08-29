@@ -129,6 +129,7 @@ class Order:
 
         stop_loss = self.entry - (1.6 * difference)
 
+        notifier(f'take profit : {self.take_profit},round : {self.round_price} ,after round : {round(self.take_profit, self.round_price)},difference : {difference} , 2nd entry : {stop_loss}')
 
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
@@ -179,6 +180,8 @@ class Order:
         self.take_profit = self.lowerband 
 
         stop_loss = self.entry + (1.6 * difference)
+
+        notifier(f'take profit : {self.take_profit}, difference : {difference} , 2nd entry : {stop_loss}')
         
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
