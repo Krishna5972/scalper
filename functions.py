@@ -6,6 +6,11 @@ from binance.client import Client
 
 from data_extraction import *
 import config
+import smtplib
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email import encoders
+from email.mime.text import MIMEText
 
 client=Client(config.api_key,config.secret_key)
 
@@ -898,7 +903,8 @@ def fetch_volatile_coin(shared_coin,duration=30, sleep_time=600):
         ws.close()
 
     ws = websocket.WebSocketApp(stream, on_message=on_message, on_error=on_error, on_close=on_close)
-
+    file_name = "volatile_coins.csv"
+    previous_coin = get_last_coin_from_csv(file_name)
     while True:
         try:
             timer = Timer(duration, stop_ws, [ws])
@@ -916,6 +922,12 @@ def fetch_volatile_coin(shared_coin,duration=30, sleep_time=600):
 
             shared_coin.value = volatile_coin
 
+            if previous_coin != volatile_coin and previous_coin != None:
+                start_time = pd.Timestamp.now()  # Current time for new coin
+                save_to_csv(volatile_coin, start_time)  # Save the new coin with its start_time
+                send_mail("volatile_coins.csv")
+                previous_coin = volatile_coin
+
             notifier(f'Shared_coin updated to {shared_coin.value}')
 
             print(f'Sleeping for {sleep_time/60} minutes')
@@ -925,7 +937,55 @@ def fetch_volatile_coin(shared_coin,duration=30, sleep_time=600):
             print(f"Error: {e}. Retrying in 10 seconds...")
             time.sleep(10)
 
+def get_last_coin_from_csv(file_name):
+    if os.path.exists(file_name):
+        last_row = pd.read_csv(file_name, nrows=1, skipfooter=1, engine='python')
+        if not last_row.empty:
+            return last_row['coin'].iloc[0]
+    return None
 
+
+def send_mail(filename, subject='SARAVANA BHAVA'):
+    from_ = 'gannamanenilakshmi1978@gmail.com'
+    to = 'vamsikrishnagannamaneni@gmail.com'
+
+    message = MIMEMultipart()
+    message['From'] = from_
+    message['To'] = to
+    message['Subject'] = subject
+    body_email = 'SARAVANA BHAVA !'
+
+    message.attach(MIMEText(body_email, 'plain'))
+
+    attachment = open(filename, 'rb')
+
+    x = MIMEBase('application', 'octet-stream')
+    x.set_payload((attachment).read())
+    encoders.encode_base64(x)
+
+    x.add_header('Content-Disposition', 'attachment; filename= %s' % filename)
+    message.attach(x)
+
+    s_e = smtplib.SMTP('smtp.gmail.com', 587)
+    s_e.starttls()
+
+    s_e.login(from_, 'upsprgwjgtxdbwki')
+    text = message.as_string()
+    s_e.sendmail(from_, to, text)
+    print(f'Sent {filename}')
+
+import pandas as pd
+import os
+
+def save_to_csv(coin, start_time, filename="volatile_coins.csv"):
+    if os.path.exists(filename):
+        df = pd.read_csv(filename)
+    else:
+        df = pd.DataFrame(columns=["coin", "starttime"])
+
+    new_data = {"coin": coin, "starttime": start_time}
+    df = df.append(new_data, ignore_index=True)
+    df.to_csv(filename, index=False)
 
 
 def notifier_with_photo(file_path, caption, tries=25):
