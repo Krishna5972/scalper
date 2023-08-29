@@ -231,27 +231,8 @@ async def main(shared_coin,current_trade):
     async def listen(df):
 
         coin = current_trade.get_current_coin()
-        stream = f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}"
-        async with websockets.connect(stream) as ws:
-            try:
-                while True:
-                    message = await ws.recv()
-                    df = await on_message(message,df)
-                    
-            except websockets.ConnectionClosed:
-                print("WebSocket connection closed. Attempting to reconnect...")
-                await asyncio.sleep(10)
-                df = await listen(df)
-        return df
-    
-    
-
-
-  
-
-    while True:
-        coin = current_trade.get_current_coin()
         # Check if the coin has changed
+        print(f'Checking coin : {coin}, shared_coin : {shared_coin.value}')
         if coin != shared_coin.value:
 
             #close current positions
@@ -327,8 +308,27 @@ async def main(shared_coin,current_trade):
                 order.make_sell_trade(client)
                 notifier(f'Made a sell trade when for {coin}')
 
+        stream = f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}"
+        async with websockets.connect(stream) as ws:
+            try:
+                while True:
+                    message = await ws.recv()
+                    df = await on_message(message,df)
+                    if coin != shared_coin.value:
+                        break
+                    
+            except websockets.ConnectionClosed:
+                print("WebSocket connection closed. Attempting to reconnect...")
+                await asyncio.sleep(10)
+                df = await listen(df)
+        return df
+    
+    
 
-# try:  
+
+  
+
+    while True:
         print('running...')
         df = await listen(df)
 #         except Exception as e:

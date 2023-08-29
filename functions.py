@@ -866,7 +866,7 @@ import json
 import websocket
 from threading import Timer
 
-def fetch_volatile_coin(shared_coin,duration=20, sleep_time=600):
+def fetch_volatile_coin(shared_coin,duration=30, sleep_time=600):
     stream = "wss://fstream.binance.com/ws/!ticker@arr"
     symbol_data = {}
 
@@ -915,6 +915,8 @@ def fetch_volatile_coin(shared_coin,duration=20, sleep_time=600):
             volatile_coin = volatile_coin.split('USDT')[0]
 
             shared_coin.value = volatile_coin
+
+            notifier(f'Shared_coin updated to {shared_coin.value}')
 
             print(f'Sleeping for {sleep_time/60} minutes')
             time.sleep(sleep_time)
