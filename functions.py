@@ -861,3 +861,64 @@ def get_lowerband(super_df):
 
 def get_upperband(super_df):
     return super_df.iloc[-1]['upperband']
+
+import json
+import websocket
+from threading import Timer
+
+def fetch_volatile_coin(shared_coin,duration=10, sleep_time=600):
+    stream = "wss://fstream.binance.com/ws/!ticker@arr"
+    symbol_data = {}
+
+    def get_volatile_dataframe():
+        df = pd.DataFrame.from_dict(symbol_data, orient='index')
+        df['PctRange'] = (df['h'] - df['l']) / abs(df['l']) * 100
+        df['Volatility'] = df['PctRange'].rolling(window=1).mean()
+        df_volatility = df.sort_values(by='Volatility')
+        return df_volatility
+
+    def on_message(ws, message):
+        msg = json.loads(message)
+        symbols = [x for x in msg if x['s'].endswith('USDT')]
+        frame = pd.DataFrame(symbols)[['E', 's', 'o', 'h', 'l', 'c']]
+        frame.E = pd.to_datetime(frame.E, unit='ms')
+        frame[['o', 'h', 'l', 'c']] = frame[['o', 'h', 'l', 'c']].astype(float)
+        for _, row in frame.iterrows():
+            symbol = row['s']
+            symbol_data[symbol] = row.to_dict()
+
+    def on_error(ws, error):
+        print(f"WebSocket Error: {error}")
+
+    def on_close(ws, close_status_code, close_msg):
+        print("WebSocket connection closed.")
+
+    def stop_ws(ws):
+        print(f"Stopping websocket after {duration} seconds.")
+        ws.close()
+
+    ws = websocket.WebSocketApp(stream, on_message=on_message, on_error=on_error, on_close=on_close)
+
+    while True:
+        try:
+            timer = Timer(duration, stop_ws, [ws])
+            timer.start()
+
+            print('checking for new volatile coin')
+            ws.run_forever()
+
+            df = get_volatile_dataframe()
+            volatile_coin = df.iloc[-1]['s']
+
+            print(volatile_coin)
+
+            volatile_coin = volatile_coin.split('USDT')[0]
+
+            shared_coin.value = volatile_coin
+
+            print(f'Sleeping for {sleep_time/60} minutes')
+            time.sleep(sleep_time)
+
+        except Exception as e:
+            print(f"Error: {e}. Retrying in 10 seconds...")
+            time.sleep(10)
