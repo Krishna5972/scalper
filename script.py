@@ -163,6 +163,8 @@ async def main(shared_coin,current_trade):
 
             print(f'Prev PivotSuperTrend signal : {prev_pivot_signal},Prev SuperTrend Signal : {prev_signal}' )
 
+            notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
+            notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
             print(f'Current PivotSuperTrend signal : {current_pivot_signal}, SuperTrend Signal : {current_signal}' )
             
             if (current_signal != prev_signal) or (current_pivot_signal !=prev_pivot_signal): 

@@ -864,8 +864,14 @@ def get_pivot_supertrend_signal(pivot_super_df):
 def get_lowerband(super_df):
     return super_df.iloc[-1]['lowerband']
 
+def get_prev_lowerband(super_df):
+    return super_df.iloc[-2]['lowerband']
+
 def get_upperband(super_df):
     return super_df.iloc[-1]['upperband']
+
+def get_prev_upperband(super_df):
+    return super_df.iloc[-2]['upperband']
 
 import json
 import websocket
