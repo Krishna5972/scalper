@@ -866,7 +866,7 @@ import json
 import websocket
 from threading import Timer
 
-def fetch_volatile_coin(shared_coin,duration=10, sleep_time=600):
+def fetch_volatile_coin(shared_coin,duration=30, sleep_time=600):
     stream = "wss://fstream.binance.com/ws/!ticker@arr"
     symbol_data = {}
 
@@ -916,9 +916,29 @@ def fetch_volatile_coin(shared_coin,duration=10, sleep_time=600):
 
             shared_coin.value = volatile_coin
 
+            notifier(f'Shared_coin updated to {shared_coin.value}')
+
             print(f'Sleeping for {sleep_time/60} minutes')
             time.sleep(sleep_time)
 
         except Exception as e:
             print(f"Error: {e}. Retrying in 10 seconds...")
             time.sleep(10)
+
+
+
+
+def notifier_with_photo(file_path, caption, tries=25):
+    telegram_api_url = f'https://api.telegram.org/bot{telegram_auth_token}/sendPhoto'
+    files = {'photo': open(file_path, 'rb')}
+    data = {'chat_id': f'@{telegram_group_id}', 'caption': caption}
+
+    for try_num in range(tries):
+        tel_resp = requests.post(telegram_api_url, files=files, data=data)
+
+        if tel_resp.status_code == 200:
+            return
+        else:  
+            print(f'Telegram notifier problem. Try number: {try_num + 1}')
+            time.sleep(1)
+    print(f'Failed to send photo after {tries} attempts.')

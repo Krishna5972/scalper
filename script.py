@@ -115,7 +115,7 @@ async def main(shared_coin,current_trade):
     decimal_index = x_str.find('.')
     round_price = len(x_str) - decimal_index - 1
 
-
+    current_trade.round_price = round_price
 
     exchange_info = client.futures_exchange_info()
 
@@ -124,6 +124,8 @@ async def main(shared_coin,current_trade):
             round_quantity = symbol['quantityPrecision']
             break
     df_copy = df.copy()
+
+    current_trade.round_quantity = round_quantity
 
     super_df=supertrend_njit(coin, df_copy, period, atr1)
     df_copy = df.copy()
@@ -137,9 +139,9 @@ async def main(shared_coin,current_trade):
 
     df = df[['OpenTime', 'open', 'high', 'low', 'close', 'volume']]
 
-    async def on_message(message,df):
+    async def on_message(message,df,current_trade):
         data = json.loads(message)
-
+        coin = current_trade.get_current_coin()
         if data['k']['x'] == True:
             notifier(f'Candle closed : {timeframe} , coin : {coin}')
             df = get_latest_df(data, df)
@@ -180,8 +182,8 @@ async def main(shared_coin,current_trade):
                 
                 #stake = get_stake(super_df,client,risk)
                 
-                quantity = round(stake/entry, round_quantity)
-                partial_profit_take = round(quantity/2,round_quantity)
+                quantity = round(stake/entry, current_trade.round_quantity)
+                partial_profit_take = round(quantity/2,current_trade.round_quantity)
                 
                 change = None
                 
@@ -194,12 +196,14 @@ async def main(shared_coin,current_trade):
                 order = Order(coin = coin,
                             entry = entry,
                             quantity = quantity,
-                            round_price = round_price,
+                            round_price = current_trade.round_price,
                             change = change,
                             partial_profit_take = partial_profit_take,
                             lowerband = lowerband,
                             upperband = upperband
                             )
+                
+                notifier(f'round price : {order.round_price}')
                 
                 if pivot_signal == 'Buy' and signal == 'Buy':  
                     order.make_buy_trade(client)   
@@ -228,30 +232,11 @@ async def main(shared_coin,current_trade):
 
 
 
-    async def listen(df):
+    async def listen(df,current_trade):
 
-        coin = current_trade.get_current_coin()
-        stream = f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}"
-        async with websockets.connect(stream) as ws:
-            try:
-                while True:
-                    message = await ws.recv()
-                    df = await on_message(message,df)
-                    
-            except websockets.ConnectionClosed:
-                print("WebSocket connection closed. Attempting to reconnect...")
-                await asyncio.sleep(10)
-                df = await listen(df)
-        return df
-    
-    
-
-
-  
-
-    while True:
         coin = current_trade.get_current_coin()
         # Check if the coin has changed
+        notifier(f'Checking coin : {coin}, shared_coin : {shared_coin.value}')
         if coin != shared_coin.value:
 
             #close current positions
@@ -270,6 +255,8 @@ async def main(shared_coin,current_trade):
             decimal_index = x_str.find('.')
             round_price = len(x_str) - decimal_index - 1
 
+            current_trade.round_price = round_price
+
             usdt_leverage,busd_leverage = 25,25
 
             max_usdt_leverage,max_busd_leverage = get_max_leverage(coin, config.api_key, config.secret_key)
@@ -284,6 +271,9 @@ async def main(shared_coin,current_trade):
                     round_quantity = symbol['quantityPrecision']
                     break
             df_copy = df.copy()
+
+            current_trade.round_quantity = round_quantity
+            
 
             super_df=supertrend_njit(coin, df_copy, period, atr1)
             df_copy = df.copy()
@@ -319,6 +309,8 @@ async def main(shared_coin,current_trade):
                         lowerband = lowerband,
                         upperband = upperband
                         )
+            
+            notifier(f'round price : {order.round_price}')
 
             if signal == "Buy":
                 order.make_buy_trade(client)  
@@ -327,10 +319,30 @@ async def main(shared_coin,current_trade):
                 order.make_sell_trade(client)
                 notifier(f'Made a sell trade when for {coin}')
 
+        stream = f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}"
+        notifier(f'new stream : {stream}')
+        async with websockets.connect(stream) as ws:
+            try:
+                while True:
+                    message = await ws.recv()
+                    df = await on_message(message,df,current_trade)
+                    if coin != shared_coin.value:
+                        break
+                    
+            except websockets.ConnectionClosed:
+                print("WebSocket connection closed. Attempting to reconnect...")
+                await asyncio.sleep(10)
+                df = await listen(df)
+        return df
+    
+    
 
-# try:  
-        print('running...')
-        df = await listen(df)
+
+  
+
+    while True:
+        notifier(f'Old coin : {coin}')
+        df = await listen(df,current_trade)
 #         except Exception as e:
 #             print(f"Error: {e}. Retrying in 10 seconds...")
 #             await asyncio.sleep(10)
@@ -347,7 +359,7 @@ def run_async_main(shared_coin,current_trade):
 if __name__ == "__main__":
     
     coin = input("Please enter the coin name: ")
-    stake = float(input("enter the stake"))
+    stake = float(input("Enter the stake :"))
 
     timeframe = get_timeframe()
     print(f"You've selected {timeframe}. Please reconfirm.")
@@ -359,10 +371,15 @@ if __name__ == "__main__":
     else:
         print("The selections don't match. Please try again.")
 
+    
+
     current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake)
     manager = Manager()
     shared_coin = manager.Value(str, coin)
     shared_coin.value = coin
+
+    notifier_with_photo("data/saravanabhava.jpeg", "SARAVANA BHAVA")
+
     p1 = Process(target=fetch_volatile_coin, args=(shared_coin,))
     p2 = Process(target=run_async_main, args=(shared_coin,current_trade))
 
