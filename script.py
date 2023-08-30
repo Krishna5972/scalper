@@ -349,11 +349,12 @@ async def main(shared_coin,current_trade):
   
 
     while True:
-        notifier(f'Old coin : {coin}')
-        df = await listen(df,current_trade)
-#         except Exception as e:
-#             print(f"Error: {e}. Retrying in 10 seconds...")
-#             await asyncio.sleep(10)
+        try:
+            notifier(f'Old coin : {coin}')
+            df = await listen(df,current_trade)
+        except Exception as e:
+            print(f"Error: {e}. Retrying in 10 seconds...")
+            await asyncio.sleep(10)
 
 
 
