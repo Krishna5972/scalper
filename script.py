@@ -127,7 +127,10 @@ async def main(shared_coin,current_trade):
 
     current_trade.round_quantity = round_quantity
 
-    super_df=supertrend_njit(coin, df_copy, period, atr1)
+
+    pivot_st = PivotSuperTrendConfiguration()
+    super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
+    
     df_copy = df.copy()
     trade_df=create_signal_df(super_df,df_copy,coin,timeframe,atr1,period,100,100)
 
@@ -146,15 +149,6 @@ async def main(shared_coin,current_trade):
             notifier(f'Candle closed : {timeframe} , coin : {coin}')
             df = get_latest_df(data, df)
             df_copy = df.copy()
-            super_df=supertrend_njit(coin, df_copy, period, atr1)
-            ema = get_ema(super_df,'ema_81')
-            
-            print(f'Length of super_df : {super_df.shape[0]}')
-            df_copy = df.copy()
-            signal = get_signal(super_df)
-            super_df.to_csv('super_df.csv',index=False,mode='w+')
-            current_signal = signal
-            prev_signal = get_prev_signal(super_df)
 
             pivot_st = PivotSuperTrendConfiguration()
             pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
@@ -162,13 +156,27 @@ async def main(shared_coin,current_trade):
             current_pivot_signal = pivot_signal
             prev_pivot_signal = get_prev_pivot_supertrend_signal(pivot_super_df)
 
+            super_df = pivot_super_df
+
+            #super_df=supertrend_njit(coin, df_copy, period, atr1)
+            ema = get_ema(super_df,'ema_81')
+            
+            print(f'Length of super_df : {super_df.shape[0]}')
+            df_copy = df.copy()
+            signal = get_signal(super_df)
+            #super_df.to_csv('super_df.csv',index=False,mode='w+')
+            current_signal = signal
+            prev_signal = get_prev_signal(super_df)
+
+            
+
             print(f'Prev PivotSuperTrend signal : {prev_pivot_signal},Prev SuperTrend Signal : {prev_signal}' )
 
             notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
             notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
             print(f'Current PivotSuperTrend signal : {current_pivot_signal}, SuperTrend Signal : {current_signal}' )
             
-            if (current_signal != prev_signal) or (current_pivot_signal !=prev_pivot_signal): 
+            if current_signal != prev_signal: 
                 
                 close_any_open_positions(coin,client)
                 cancel_all_open_orders(coin,client)
@@ -281,9 +289,9 @@ async def main(shared_coin,current_trade):
 
             current_trade.round_quantity = round_quantity
             
-        
+            pivot_st = PivotSuperTrendConfiguration()
 
-            super_df=supertrend_njit(coin, df_copy, period, atr1)
+            super_df=supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
             df_copy = df.copy()
             trade_df=create_signal_df(super_df,df_copy,coin,timeframe,atr1,period,100,100)
 

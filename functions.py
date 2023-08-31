@@ -69,17 +69,29 @@ def get_max_leverage(coin: str, api_key: str, secret_key: str):
 telegram_auth_token = '5515290544:AAG9T15VaY6BIxX2VYX8x2qr34aC-zVEYMo'
 telegram_group_id = 'notifier2_scanner_bot_link'
 
-def notifier(message, tries=25):
-    telegram_api_url = f'https://api.telegram.org/bot{telegram_auth_token}/sendMessage?chat_id=@{telegram_group_id}&text={message}'
-    # https://api.telegram.org/bot5515290544:AAG9T15VaY6BIxX2VYX8x2qr34aC-zVEYMo/sendMessage?chat_id=@notifier2_scanner_bot_link&text=hii
+import requests
+import time
+from requests.exceptions import RequestException
+
+def notifier(message, tries=5, base_sleep=1):
+    telegram_api_url = f'https://api.telegram.org/bot{telegram_auth_token}/sendMessage'
+    data = {
+        'chat_id': f'@{telegram_group_id}',
+        'text': message
+    }
     
     for try_num in range(tries):
-        tel_resp = requests.get(telegram_api_url)
-        if tel_resp.status_code == 200:
-            return
-        else:
-            print(f'Telegram notifier problem. Try number: {try_num + 1}')
-            time.sleep(1)
+        try:
+            tel_resp = requests.post(telegram_api_url, data=data)
+            if tel_resp.status_code == 200:
+                return
+            else:
+                print(f'Telegram API returned {tel_resp.status_code}. Try number: {try_num + 1}')
+        except RequestException as e:
+            print(f'Telegram notifier encountered an error: {e}. Try number: {try_num + 1}')
+
+        # Exponential backoff
+        time.sleep(base_sleep * (2 ** try_num))
         
     print(f'Failed to send message after {tries} attempts.')
 
@@ -115,10 +127,10 @@ def get_stake(super_df,client,risk = 0.02):
     stake = (acc_balance*0.88)
     notifier(f'USDT : Allocated stake:{round(stake,2)}')
     if signal == 'Buy':
-        sl = super_df.iloc[-1]['lower_band']
+        sl = super_df.iloc[-1]['lowerband']
         sl_perc = (entry-sl)/entry
     else:
-        sl = super_df.iloc[-1]['upper_band']
+        sl = super_df.iloc[-1]['upperband']
         sl_perc = (sl-entry)/entry
 
     stake = (stake*risk)/sl_perc
@@ -252,7 +264,7 @@ def supertrend(coin,df, period, atr_multiplier):
 
 
 @njit
-def cal_numba(opens,highs,lows,closes,in_uptrends,profit_perc,sl_perc,upper_bands,lower_bands):
+def cal_numba(opens,highs,lows,closes,in_uptrends,profit_perc,sl_perc,upperbands,lowerbands):
     entries=np.zeros(len(opens))
     signals=np.zeros(len(opens))  #characters  1--> buy  2--->sell
     tps=np.zeros(len(opens))
@@ -287,8 +299,8 @@ def cal_numba(opens,highs,lows,closes,in_uptrends,profit_perc,sl_perc,upper_band
                 tp = entry - (entry * profit_perc)
                 sl = entry + (entry * sl_perc)
                 
-                upper[i]=upper_bands[i]
-                lower[i]=lower_bands[i]
+                upper[i]=upperbands[i]
+                lower[i]=lowerbands[i]
                 
                 
                 entries[i]=entry
@@ -357,8 +369,8 @@ def cal_numba(opens,highs,lows,closes,in_uptrends,profit_perc,sl_perc,upper_band
                 tp = entry + (entry * profit_perc)
                 sl = entry - (entry * sl_perc)
                 
-                upper[i]=upper_bands[i]
-                lower[i]=lower_bands[i]
+                upper[i]=upperbands[i]
+                lower[i]=lowerbands[i]
                 
                 entries[i]=entry
                 tps[i]=tp
@@ -479,11 +491,11 @@ def create_signal_df(super_df,df,coin,timeframe,atr1,period,profit,sl):
     lows=super_df[f'low'].to_numpy(dtype='float64')
     closes=super_df[f'close'].to_numpy(dtype='float64')
     in_uptrends=super_df['in_uptrend'].to_numpy(dtype='U5')
-    upper_bands=super_df['upperband'].to_numpy(dtype='float64')
-    lower_bands=super_df['lowerband'].to_numpy(dtype='float64')
-    entries,signals,tps,trades,close_prices,time_index,candle_count,local_max,local_min,local_max_bar,local_min_bar,upper,lower=cal_numba(opens,highs,lows,closes,in_uptrends,profit,sl,upper_bands,lower_bands)
+    upperbands=super_df['upperband'].to_numpy(dtype='float64')
+    lowerbands=super_df['lowerband'].to_numpy(dtype='float64')
+    entries,signals,tps,trades,close_prices,time_index,candle_count,local_max,local_min,local_max_bar,local_min_bar,upper,lower=cal_numba(opens,highs,lows,closes,in_uptrends,profit,sl,upperbands,lowerbands)
     trade_df=pd.DataFrame({'signal':signals,'entry':entries,'tp':tps,'trade':trades,'close_price':close_prices,'candle_count':candle_count,
-                           'local_max':local_max,'local_min':local_min,'local_max_bar':local_max_bar,'local_min_bar':local_min_bar,'upper_band':upper,'lower_band':lower})
+                           'local_max':local_max,'local_min':local_min,'local_max_bar':local_max_bar,'local_min_bar':local_min_bar,'upperband':upper,'lowerband':lower})
     # before_drop=trade_df.shape[0]
     # print(f'Number of columns before drop : {before_drop}')
     total_rows = trade_df.shape[0]
@@ -523,8 +535,13 @@ def create_signal_df(super_df,df,coin,timeframe,atr1,period,profit,sl):
     trade_df['signalTime']=pd.to_datetime(trade_df['signalTime'])
     super_df['OpenTime']=pd.to_datetime(super_df['OpenTime'])
     total_rows = trade_df.shape[0]
+    if 'upperband' in trade_df.columns:
+        trade_df = trade_df.drop('upperband', axis=1)
+    if 'lowerband' in trade_df.columns:
+        trade_df = trade_df.drop('lowerband', axis=1)
     trade_df=pd.merge(trade_df, super_df, how='left', left_on=['signalTime'], right_on = ['OpenTime'])
     total_rows = trade_df.shape[0]
+    trade_df_columns = trade_df.columns.to_list()
     trade_df=trade_df[['signal',
     'entry',
     'tp',
@@ -539,7 +556,7 @@ def create_signal_df(super_df,df,coin,timeframe,atr1,period,profit,sl):
     'candle_count',
     'local_max','local_min',
     'local_max_bar','local_min_bar',
-    'upper_band','lower_band']]
+    'upperband','lowerband']]
     
     total_rows = trade_df.shape[0]
     trade_df['max_log_return'], trade_df['min_log_return'] = zip(*trade_df.apply(calculate_min_max, axis=1))
@@ -691,8 +708,8 @@ def supertrend_pivot(coin, df, period, atr_multiplier, pivot_period):
 
     Tup.pop(0)
     Tdown.pop(0)
-    df['lower_band'] = Tup
-    df['upper_band'] = Tdown
+    df['lowerband'] = Tup
+    df['upperband'] = Tdown
     return df
 
 
