@@ -342,8 +342,10 @@ async def main(shared_coin,current_trade):
                 while True:
                     message = await ws.recv()
                     df = await on_message(message,df,current_trade)
-                    if coin != shared_coin.value:
-                        break
+                    if check_for_volatilte_coin == 1:
+                        if coin != shared_coin.value:
+                            break
+                    
                     
             except websockets.ConnectionClosed:
                 print("WebSocket connection closed. Attempting to reconnect...")
@@ -377,6 +379,7 @@ if __name__ == "__main__":
     
     coin = input("Please enter the coin name: ")
     stake = float(input("Enter the stake :"))
+    check_for_volatilte_coin = int(input("Please enter 1 to trade most volatile coin always: "))
 
     timeframe = get_timeframe()
     print(f"You've selected {timeframe}. Please reconfirm.")
