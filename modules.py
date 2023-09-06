@@ -22,7 +22,7 @@ class TradeConfiguration:
         return risk   
     
 class PivotSuperTrendConfiguration():
-    def __init__(self,period = 6, atr_multiplier = 1, pivot_period = 1):
+    def __init__(self,period = 4, atr_multiplier = 1, pivot_period = 1):
         self.period = period
         self.atr_multiplier = atr_multiplier
         self.pivot_period = pivot_period
@@ -228,12 +228,13 @@ class Order:
         notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
 
 class CurrentTrade:
-    def __init__(self,coin,stake,timeframe,round_quantity = None,round_price = None):
+    def __init__(self,coin,stake,timeframe,round_quantity = None,round_price = None,check_for_volatilte_coin=0):
         self.coin = coin
         self.stake = stake
         self.timeframe = timeframe
         self.round_quantity = round_quantity
-        self.round_price = round_price
+        self.round_price = round_price 
+        self.check_for_volatilte_coin = check_for_volatilte_coin
 
     def get_current_coin(self):
         return self.coin
