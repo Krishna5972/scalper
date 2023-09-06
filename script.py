@@ -145,6 +145,11 @@ async def main(shared_coin,current_trade):
     async def on_message(message,df,current_trade):
         data = json.loads(message)
         coin = current_trade.get_current_coin()
+        now = datetime.utcnow()
+        if now.hour == 23 and now.minute == 59:
+            close_any_open_positions(coin,client)
+            cancel_all_open_orders(coin,client)
+
         if data['k']['x'] == True:
             notifier(f'Candle closed : {timeframe} , coin : {coin}')
             df = get_latest_df(data, df)
