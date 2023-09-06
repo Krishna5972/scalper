@@ -5,8 +5,8 @@ secret_key='Sl0uIdRWjrEn1ngBlkjHnWzvNUzZ5Z3guG9i9A3vLPbcqqFsqHHHtSpRqZk4V17k'
 
 
 
-period = 12
-atr1 = 1
+period = 20
+atr1 = 10
 days_to_get_candles = 5
 
 

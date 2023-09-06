@@ -248,92 +248,94 @@ async def main(shared_coin,current_trade):
 
 
     async def listen(df,current_trade):
+        check_for_volatilte_coin = current_trade.check_for_volatilte_coin
 
         coin = current_trade.get_current_coin()
         # Check if the coin has changed
         notifier(f'Checking coin : {coin}, shared_coin : {shared_coin.value}')
-        if coin != shared_coin.value:
+        if check_for_volatilte_coin == 1:
+            if coin != shared_coin.value:
 
-            #close current positions
-            close_any_open_positions(coin,client)
-            cancel_all_open_orders(coin,client)
+                #close current positions
+                close_any_open_positions(coin,client)
+                cancel_all_open_orders(coin,client)
 
 
-            coin = shared_coin.value
-            current_trade.set_current_coin(coin)
-            notifier(f"Coin changed! Now trading {coin}.")
-            str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
-            end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
+                coin = shared_coin.value
+                current_trade.set_current_coin(coin)
+                notifier(f"Coin changed! Now trading {coin}.")
+                str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
+                end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
 
-            df=dataextract(coin,str_date,end_str,timeframe,client)
-            x_str = str(df['close'].iloc[-1])
-            decimal_index = x_str.find('.')
-            round_price = len(x_str) - decimal_index - 1
+                df=dataextract(coin,str_date,end_str,timeframe,client)
+                x_str = str(df['close'].iloc[-1])
+                decimal_index = x_str.find('.')
+                round_price = len(x_str) - decimal_index - 1
 
-            current_trade.round_price = round_price
+                current_trade.round_price = round_price
 
-            usdt_leverage,busd_leverage = 25,25
+                usdt_leverage,busd_leverage = 25,25
 
-            max_usdt_leverage,max_busd_leverage = get_max_leverage(coin, config.api_key, config.secret_key)
+                max_usdt_leverage,max_busd_leverage = get_max_leverage(coin, config.api_key, config.secret_key)
 
-            usdt_leverage = min(usdt_leverage, max_usdt_leverage)
-            busd_leverage = min(busd_leverage, max_busd_leverage)
+                usdt_leverage = min(usdt_leverage, max_usdt_leverage)
+                busd_leverage = min(busd_leverage, max_busd_leverage)
 
-            exchange_info = client.futures_exchange_info()
+                exchange_info = client.futures_exchange_info()
 
-            for symbol in exchange_info['symbols']:
-                if symbol['symbol'] == f"{coin}USDT":
-                    round_quantity = symbol['quantityPrecision']
-                    break
-            df_copy = df.copy()
+                for symbol in exchange_info['symbols']:
+                    if symbol['symbol'] == f"{coin}USDT":
+                        round_quantity = symbol['quantityPrecision']
+                        break
+                df_copy = df.copy()
 
-            current_trade.round_quantity = round_quantity
-            
-            pivot_st = PivotSuperTrendConfiguration()
+                current_trade.round_quantity = round_quantity
+                
+                pivot_st = PivotSuperTrendConfiguration()
 
-            super_df=supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
-            df_copy = df.copy()
-            trade_df=create_signal_df(super_df,df_copy,coin,timeframe,atr1,period,100,100)
+                super_df=supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
+                df_copy = df.copy()
+                trade_df=create_signal_df(super_df,df_copy,coin,timeframe,atr1,period,100,100)
 
-            signal = trade_df.iloc[-1]['signal']
+                signal = trade_df.iloc[-1]['signal']
 
-            close_any_open_positions(coin,client)
-            cancel_all_open_orders(coin,client)
-            
-            entry =  get_entry(super_df)              
-            over_all_trend = get_over_all_trend(coin)
-            lowerband = get_lowerband(super_df)
-            upperband = get_upperband(super_df)
+                close_any_open_positions(coin,client)
+                cancel_all_open_orders(coin,client)
+                
+                entry =  get_entry(super_df)              
+                over_all_trend = get_over_all_trend(coin)
+                lowerband = get_lowerband(super_df)
+                upperband = get_upperband(super_df)
 
-            ema = get_ema(super_df,'ema_81')
-            
-            tradeConfig = TradeConfiguration()
-            risk = tradeConfig.get_risk(over_all_trend,signal)
-            
-            #stake = get_stake(super_df,client,risk)
-            
-            quantity = round(stake/entry, round_quantity)
+                ema = get_ema(super_df,'ema_81')
+                
+                tradeConfig = TradeConfiguration()
+                risk = tradeConfig.get_risk(over_all_trend,signal)
+                
+                #stake = get_stake(super_df,client,risk)
+                
+                quantity = round(stake/entry, round_quantity)
 
-            partial_profit_take = round(quantity/2,round_quantity)
+                partial_profit_take = round(quantity/2,round_quantity)
 
-            order = Order(coin = coin,
-                        entry = entry,
-                        quantity = quantity,
-                        round_price = round_price,
-                        change = None,
-                        partial_profit_take = partial_profit_take,
-                        lowerband = lowerband,
-                        upperband = upperband
-                        )
-            
-            notifier(f'round price : {order.round_price}')
+                order = Order(coin = coin,
+                            entry = entry,
+                            quantity = quantity,
+                            round_price = round_price,
+                            change = None,
+                            partial_profit_take = partial_profit_take,
+                            lowerband = lowerband,
+                            upperband = upperband
+                            )
+                
+                notifier(f'round price : {order.round_price}')
 
-            if signal == "Buy":
-                order.make_buy_trade(client)  
-                notifier(f'Made a buy trade when for {coin}')
-            else:
-                order.make_sell_trade(client)
-                notifier(f'Made a sell trade when for {coin}')
+                if signal == "Buy":
+                    order.make_buy_trade(client)  
+                    notifier(f'Made a buy trade when for {coin}')
+                else:
+                    order.make_sell_trade(client)
+                    notifier(f'Made a sell trade when for {coin}')
 
         stream = f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}"
         notifier(f'new stream : {stream}')
@@ -360,7 +362,7 @@ async def main(shared_coin,current_trade):
 
     while True:
         try:
-            notifier(f'Old coin : {coin}')
+            #notifier(f'Old coin : {coin}')
             df = await listen(df,current_trade)
         except Exception as e:
             print(f"Error: {e}. Retrying in 10 seconds...")
@@ -393,7 +395,7 @@ if __name__ == "__main__":
 
     
 
-    current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake)
+    current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin)
     manager = Manager()
     shared_coin = manager.Value(str, coin)
     shared_coin.value = coin
