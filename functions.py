@@ -560,7 +560,7 @@ def create_signal_df(super_df,df,coin,timeframe,atr1,period,profit,sl):
     
     total_rows = trade_df.shape[0]
 
-    if trade_df.shape == 0:
+    if total_rows == 0:
         return pd.DataFrame()
     trade_df['max_log_return'], trade_df['min_log_return'] = zip(*trade_df.apply(calculate_min_max, axis=1))
     trade_df['prev_max_log_return'] = trade_df['max_log_return'].shift(1)
