@@ -22,7 +22,7 @@ class TradeConfiguration:
         return risk   
     
 class PivotSuperTrendConfiguration():
-    def __init__(self,period = 12, atr_multiplier = 1, pivot_period = 10):
+    def __init__(self,period = 1, atr_multiplier = 1, pivot_period = 1):
         self.period = period
         self.atr_multiplier = atr_multiplier
         self.pivot_period = pivot_period
@@ -129,6 +129,7 @@ class Order:
 
         stop_loss = self.entry - (1.6 * difference)
 
+        notifier(f'take profit : {self.take_profit},round : {self.round_price} ,after round : {round(self.take_profit, self.round_price)},difference : {difference} , 2nd entry : {stop_loss}')
 
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
@@ -179,6 +180,8 @@ class Order:
         self.take_profit = self.lowerband 
 
         stop_loss = self.entry + (1.6 * difference)
+
+        notifier(f'take profit : {self.take_profit}, difference : {difference} , 2nd entry : {stop_loss}')
         
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
@@ -225,10 +228,13 @@ class Order:
         notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
 
 class CurrentTrade:
-    def __init__(self,coin,stake,timeframe):
+    def __init__(self,coin,stake,timeframe,round_quantity = None,round_price = None,check_for_volatilte_coin=0):
         self.coin = coin
         self.stake = stake
         self.timeframe = timeframe
+        self.round_quantity = round_quantity
+        self.round_price = round_price 
+        self.check_for_volatilte_coin = check_for_volatilte_coin
 
     def get_current_coin(self):
         return self.coin
