@@ -48,7 +48,7 @@ async def main(shared_coin,current_trade):
 
 
 
-    usdt_leverage,busd_leverage = 25,25
+    usdt_leverage,busd_leverage = 1,1
 
     max_usdt_leverage,max_busd_leverage = get_max_leverage(coin, config.api_key, config.secret_key)
 
@@ -125,7 +125,11 @@ async def main(shared_coin,current_trade):
             break
     df_copy = df.copy()
 
-    current_trade.round_quantity = round_quantity
+    try:
+        current_trade.round_quantity = round_quantity
+    except UnboundLocalError as e:
+        current_trade.round_quantity = 0
+        notifier('Could not find quantityPrecision')
 
 
     pivot_st = PivotSuperTrendConfiguration()
@@ -146,9 +150,9 @@ async def main(shared_coin,current_trade):
         data = json.loads(message)
         coin = current_trade.get_current_coin()
         now = datetime.utcnow()
-        if now.hour == 23 and now.minute == 59:
-            close_any_open_positions(coin,client)
-            cancel_all_open_orders(coin,client)
+        # if now.hour == 23 and now.minute == 59:
+        #     close_any_open_positions(coin,client)
+        #     cancel_all_open_orders(coin,client)
 
         if data['k']['x'] == True:
             notifier(f'Candle closed : {timeframe} , coin : {coin}')
@@ -385,6 +389,7 @@ def run_async_main(shared_coin,current_trade):
 if __name__ == "__main__":
     
     coin = input("Please enter the coin name: ")
+    coin = coin.upper()
     stake = float(input("Enter the stake :"))
     check_for_volatilte_coin = int(input("Please enter 1 to trade most volatile coin always: "))
 
