@@ -149,7 +149,7 @@ async def main(shared_coin,current_trade):
     async def on_message(message,df,current_trade):
         data = json.loads(message)
         coin = current_trade.get_current_coin()
-        now = datetime.utcnow()
+        #now = datetime.utcnow()
         # if now.hour == 23 and now.minute == 59:
         #     close_any_open_positions(coin,client)
         #     cancel_all_open_orders(coin,client)
@@ -177,6 +177,8 @@ async def main(shared_coin,current_trade):
             current_signal = signal
             prev_signal = get_prev_signal(super_df)
 
+            trade_df = create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
+
             
 
             print(f'Prev PivotSuperTrend signal : {prev_pivot_signal},Prev SuperTrend Signal : {prev_signal}' )
@@ -189,22 +191,25 @@ async def main(shared_coin,current_trade):
                 
                 close_any_open_positions(coin,client)
                 cancel_all_open_orders(coin,client)
-                
+
+                middle_dc = get_middle_dc(client,coin)
                 entry =  get_entry(super_df)              
-                over_all_trend = get_over_all_trend(coin)
+                #over_all_trend = get_over_all_trend(coin)
                 lowerband = get_lowerband(super_df)
                 upperband = get_upperband(super_df)
 
-                ema = get_ema(super_df,'ema_81')
-                
+                if entry > middle_dc:
+                    dc_signal = 'long'
+                else:
+                    dc_signal = 'short'
+       
                 tradeConfig = TradeConfiguration()
-                risk = tradeConfig.get_risk(over_all_trend,signal)
+                risk = 0.01
                 
                 #stake = get_stake(super_df,client,risk)
                 
                 quantity = round(stake/entry, current_trade.round_quantity)
-                partial_profit_take = round(quantity/2,current_trade.round_quantity)
-                
+                partial_profit_take = round(quantity/2,current_trade.round_quantity) 
                 change = None
                 
                 if (current_pivot_signal !=prev_pivot_signal): 
@@ -222,36 +227,49 @@ async def main(shared_coin,current_trade):
                             lowerband = lowerband,
                             upperband = upperband
                             )
-                
-                notifier(f'round price : {order.round_price}')
-                
-                if pivot_signal == 'Buy' and signal == 'Buy':  
-                    order.make_buy_trade(client)   
-                    
-                    
-                elif pivot_signal == 'Buy' and signal == 'Sell':
-                    order.quantity = round(order.quantity/2, current_trade.round_quantity)
-                    order.partial_profit_take = round(order.quantity/2,current_trade.round_quantity)
-                    order.make_sell_trade(client)
-                    
-                
-                elif pivot_signal == 'Sell' and signal == 'Sell':
-                    order.make_sell_trade(client)
-                    
-                elif pivot_signal == 'Sell' and signal == 'Buy':
-                    order.quantity = round(order.quantity/2, current_trade.round_quantity)
-                    order.partial_profit_take = round(order.quantity/2,current_trade.round_quantity)
-                    order.make_buy_trade(client)
-                    
-                    
-                else:
-                    notifier(f'Something is wrong...Debug')
-                
-    #             notifier(f'Overall trend before passing : {over_all_trend}')
-    #             notifier(f'signal : {signal},entry : {entry},stake : {stake},quantity : {quantity}')
-                notifier(f'Short Term Trend : {signal} , Pivot SuperTrend signal : {pivot_signal}')
+                       
+                if pivot_signal == 'Buy' and dc_signal == 'long':         
+                    order.make_buy_trade(client) 
+                    notifier(f'signal : Buy , above DC middle')  
 
-            
+                elif pivot_signal == 'Sell' and dc_signal == 'long':
+                    prev_perc = trade_df.iloc[-2]['percentage']
+                    if prev_perc > 0:
+                        order.quantity = round(order.quantity/1.5, current_trade.round_quantity)
+                        order.make_buy_trade(client)
+                        notifier(f'signal : Sell , above DC middle, still in trend so buying')
+                    else:
+                        order.make_sell_trade(client)
+                        notifier(f'signal : Sell , above DC middle, may not be in trend so selling')
+                    
+                    
+                # elif pivot_signal == 'Buy' and signal == 'Sell':
+                #     order.quantity = round(order.quantity/2, current_trade.round_quantity)
+                #     order.partial_profit_take = round(order.quantity/2,current_trade.round_quantity)
+                #     order.make_sell_trade(client)
+                    
+                
+                elif pivot_signal == 'Sell' and dc_signal == 'short':   
+                    order.make_sell_trade(client)
+                    notifier(f'signal : Sell , below DC middle')
+
+                elif pivot_signal == 'Buy' and dc_signal == 'short':
+                    prev_perc = trade_df.iloc[-2]['percentage']
+                    if prev_perc > 0:
+                        order.quantity = round(order.quantity/1.5, current_trade.round_quantity)
+                        order.make_sell_trade(client)
+                        notifier(f'signal : Buy , below DC middle, still in down trend so selling')
+                    else:
+                        order.make_buy_trade(client)
+                        notifier(f'signal : Buy , below DC middle, prev sell loss so may not in down trend so buying')
+                    
+                    
+                # elif pivot_signal == 'Sell' and signal == 'Buy':
+                #     order.quantity = round(order.quantity/2, current_trade.round_quantity)
+                #     order.partial_profit_take = round(order.quantity/2,current_trade.round_quantity)
+                #     order.make_buy_trade(client)     
+                else:
+                    notifier(f'Something is wrong...Debug')      
         return df
 
 

@@ -550,9 +550,6 @@ def create_signal_df(super_df,df,coin,timeframe,atr1,period,profit,sl):
     'TradeOpenTime',
     'percentage',
     'OpenTime',
-    'hour',
-    'minute','day',
-    'month',
     'candle_count',
     'local_max','local_min',
     'local_max_bar','local_min_bar',
@@ -583,6 +580,13 @@ def create_signal_df(super_df,df,coin,timeframe,atr1,period,profit,sl):
 import pickle
 import math
 
+def DONCHIAN(hi, lo, n):
+    hi = pd.Series(hi)
+    lo = pd.Series(lo)
+    uc = hi.rolling(n, min_periods=n).max()
+    lc = lo.rolling(n, min_periods=n).min()
+    mc = (uc + lc) / 2
+    return lc, mc, uc
 
 def save_to_pkl(data, path):
     with open(path, 'wb') as file:
@@ -782,6 +786,20 @@ def get_over_all_trend(coin):
     print(f"Overall trend: {trend}")
     
     return trend
+
+def get_middle_dc(client,coin):
+    str_date = (datetime.now()- timedelta(days=450)).strftime('%b %d,%Y')
+    end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
+
+    df_day=dataextract(coin,str_date,end_str,'1d',client)
+    lc, mc, uc = DONCHIAN(df_day['high'].shift(1), df_day['low'].shift(1), 20)
+    df_day['Donchian_Lower'] = lc
+    df_day['Donchian_Middle'] = mc
+    df_day['Donchian_Upper'] = uc
+
+    middle_dc = df_day['Donchian_Middle'].iloc[-1]
+
+    return middle_dc
 
 def get_latest_df(data,df):
     candle = data['k']
