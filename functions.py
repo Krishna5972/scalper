@@ -73,6 +73,13 @@ import requests
 import time
 from requests.exceptions import RequestException
 
+def get_dc_signal(entry, middle_dc, current_signal):
+    if np.isnan(middle_dc):
+        notifier('Looks like a new coin listing check')
+        return 'long' if current_signal == "Buy" else 'short'
+    
+    return 'long' if entry > middle_dc else 'short'
+
 def notifier(message, tries=5, base_sleep=1):
     telegram_api_url = f'https://api.telegram.org/bot{telegram_auth_token}/sendMessage'
     data = {
@@ -1047,3 +1054,99 @@ def notifier_with_photo(file_path, caption, tries=25):
             print(f'Telegram notifier problem. Try number: {try_num + 1}')
             time.sleep(1)
     print(f'Failed to send photo after {tries} attempts.')
+
+
+from functions import  *
+import logging
+import pandas as pd
+import time
+from modules import *
+from binance.client import Client
+
+
+logging.basicConfig(filename='trading_data_log.txt',  filemode='a',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+def get_coin(shared_coin,sleep_time=3600):
+    url = "https://scanner.tradingview.com/crypto/scan"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36",
+        "Content-Type": "application/json",
+        "Accept": "*/*",
+    }
+   
+    payload = {
+    "filter": [
+        {"left": "exchange", "operation": "equal", "right": "BINANCE"},
+        {"left": "active_symbol", "operation": "equal", "right": True},
+        {"left": "currency", "operation": "in_range", "right": ["BUSD", "USDT"]}
+    ],
+    "options": {"lang": "en"},
+    "filter2": {
+        "operator": "and",
+        "operands": [
+            {
+                "operation": {
+                    "operator": "or",
+                    "operands": [
+                        {"expression": {"left": "typespecs", "operation": "has", "right": ["perpetual"]}}
+                    ]
+                }
+            }
+        ]
+    },
+    "markets": ["crypto"],
+    "symbols": {
+        "query": {"types": []},
+        "tickers": []
+    },
+    "columns": [
+        "base_currency_logoid", "currency_logoid", "name", "close", "Volatility.D", "Volatility.M", "Volatility.W",
+        "change|60", "change", "description", "type", "subtype", "update_mode", "exchange", "pricescale", "minmov",
+        "fractional", "minmove2"
+    ],
+    "sort": {
+        "sortBy": "Volatility.D",
+        "sortOrder": "desc"
+    },
+    "price_conversion": {"to_symbol": False},
+    "range": [0, 300]
+}
+    while True:
+        try:
+            response = requests.post(url, headers=headers, data=json.dumps(payload))
+            response.raise_for_status()  # Will raise an HTTPError if the HTTP request returned an unsuccessful status code
+
+            if response.status_code == 200:
+                data = response.json()
+                logging.info("Data fetched successfully")
+                shared_coin.value = 'BLZ'
+                #shared_coin.value = select_coin(data)
+                time.sleep(sleep_time)
+            else:
+                logging.error(f"Error {response.status_code}: {response.text}")
+        except requests.RequestException as e:
+            logging.error(f"Request failed: {e}")
+
+
+def select_coin(data):
+    coins = []
+    daily_volatilites = []
+    monthly_volatilites = []
+    weekly_volatilites = []
+    for i in data['data']:
+        coin = i['d'][2].split('.')[0]
+        daily_volatility = i['d'][4]
+        monthly_volatility = i['d'][5]
+        weekly_volatility = i['d'][6]
+        coins.append(coin)
+        daily_volatilites.append(daily_volatility)
+        monthly_volatilites.append(monthly_volatility)
+        weekly_volatilites.append(weekly_volatility)
+    df_vol = pd.DataFrame(zip(coins,daily_volatilites,monthly_volatilites,weekly_volatilites),columns=['coin', 'volatility_d','volatility_m','volatility_w'])
+    df_vol['time'] = datetime.now()
+    df_vol['coin'] = df_vol['coin'].str.split('USDT').str[0]
+    return df_vol.sort_values(by="volatility_w",ascending=False).iloc[0]['coin']
+
+
+

@@ -1,4 +1,4 @@
-from functions import *
+from functions import notifier
 
 class TradeConfiguration:
     def __init__(self):
@@ -228,13 +228,14 @@ class Order:
         notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
 
 class CurrentTrade:
-    def __init__(self,coin,stake,timeframe,round_quantity = None,round_price = None,check_for_volatilte_coin=0):
+    def __init__(self,coin,stake,timeframe,use_sl,round_quantity = None,round_price = None,check_for_volatilte_coin=0):
         self.coin = coin
         self.stake = stake
         self.timeframe = timeframe
         self.round_quantity = round_quantity
         self.round_price = round_price 
         self.check_for_volatilte_coin = check_for_volatilte_coin
+        self.use_sl = use_sl
 
     def get_current_coin(self):
         return self.coin

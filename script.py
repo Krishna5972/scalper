@@ -42,7 +42,7 @@ async def main(shared_coin,current_trade):
     coin = current_trade.get_current_coin()
     stake = current_trade.stake
     timeframe = current_trade.timeframe
-
+    use_sl = current_trade.use_sl
 
     print(f"You entered: {coin}")
 
@@ -149,6 +149,7 @@ async def main(shared_coin,current_trade):
     async def on_message(message,df,current_trade):
         data = json.loads(message)
         coin = current_trade.get_current_coin()
+        use_sl = current_trade.use_sl
         #now = datetime.utcnow()
         # if now.hour == 23 and now.minute == 59:
         #     close_any_open_positions(coin,client)
@@ -198,10 +199,8 @@ async def main(shared_coin,current_trade):
                 lowerband = get_lowerband(super_df)
                 upperband = get_upperband(super_df)
 
-                if entry > middle_dc:
-                    dc_signal = 'long'
-                else:
-                    dc_signal = 'short'
+                dc_signal = get_dc_signal(entry, middle_dc, current_signal)
+
        
                 tradeConfig = TradeConfiguration()
                 risk = 0.01
@@ -230,6 +229,7 @@ async def main(shared_coin,current_trade):
                        
                 if pivot_signal == 'Buy' and dc_signal == 'long':         
                     order.make_buy_trade(client) 
+                    current_trade.use_sl = 0
                     notifier(f'signal : Buy , above DC middle')  
 
                 elif pivot_signal == 'Sell' and dc_signal == 'long':
@@ -237,9 +237,11 @@ async def main(shared_coin,current_trade):
                     if prev_perc > 0:
                         order.quantity = round(order.quantity/1.5, current_trade.round_quantity)
                         order.make_buy_trade(client)
+                        current_trade.use_sl = 1
                         notifier(f'signal : Sell , above DC middle, still in trend so buying')
                     else:
                         order.make_sell_trade(client)
+                        current_trade.use_sl = 0
                         notifier(f'signal : Sell , above DC middle, may not be in trend so selling')
                     
                     
@@ -251,6 +253,7 @@ async def main(shared_coin,current_trade):
                 
                 elif pivot_signal == 'Sell' and dc_signal == 'short':   
                     order.make_sell_trade(client)
+                    current_trade.use_sl = 0
                     notifier(f'signal : Sell , below DC middle')
 
                 elif pivot_signal == 'Buy' and dc_signal == 'short':
@@ -258,9 +261,11 @@ async def main(shared_coin,current_trade):
                     if prev_perc > 0:
                         order.quantity = round(order.quantity/1.5, current_trade.round_quantity)
                         order.make_sell_trade(client)
+                        current_trade.use_sl = 1
                         notifier(f'signal : Buy , below DC middle, still in down trend so selling')
                     else:
                         order.make_buy_trade(client)
+                        current_trade.use_sl = 0
                         notifier(f'signal : Buy , below DC middle, prev sell loss so may not in down trend so buying')
                     
                     
@@ -270,6 +275,27 @@ async def main(shared_coin,current_trade):
                 #     order.make_buy_trade(client)     
                 else:
                     notifier(f'Something is wrong...Debug')      
+            
+            else:
+                pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2, pivot_period = 2)
+                pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
+                pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
+                current_pivot_signal = pivot_signal
+                prev_pivot_signal = get_prev_pivot_supertrend_signal(pivot_super_df)
+
+                super_df = pivot_super_df
+
+                signal = get_signal(super_df)
+                current_signal = signal
+                prev_signal = get_prev_signal(super_df)
+
+                if current_signal != prev_signal and current_trade.use_sl == 1:
+                    close_any_open_positions(coin,client)
+                    cancel_all_open_orders(coin,client)
+                    notifier(f"Stoploss Hit for {coin}")
+
+        
+        
         return df
 
 
@@ -281,6 +307,7 @@ async def main(shared_coin,current_trade):
         # Check if the coin has changed
         notifier(f'Checking coin : {coin}, shared_coin : {shared_coin.value}')
         if check_for_volatilte_coin == 1:
+            use_sl = 0
             if coin != shared_coin.value:
 
                 #close current positions
@@ -379,7 +406,7 @@ async def main(shared_coin,current_trade):
             except websockets.ConnectionClosed:
                 print("WebSocket connection closed. Attempting to reconnect...")
                 await asyncio.sleep(10)
-                df = await listen(df)
+                df = await listen(df,current_trade)
         return df
     
     
@@ -423,14 +450,16 @@ if __name__ == "__main__":
 
     
 
-    current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin)
+    current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin,use_sl = 0)
     manager = Manager()
     shared_coin = manager.Value(str, coin)
     shared_coin.value = coin
 
     notifier_with_photo("data/saravanabhava.jpeg", "SARAVANA BHAVA")
 
-    p1 = Process(target=fetch_volatile_coin, args=(shared_coin,))
+    
+
+    p1 = Process(target=get_coin, args=(shared_coin,))
     p2 = Process(target=run_async_main, args=(shared_coin,current_trade))
 
 
