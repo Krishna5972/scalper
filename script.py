@@ -417,9 +417,8 @@ async def main(shared_coin,current_trade):
 def run_async_main(shared_coin,current_trade):
         asyncio.run(main(shared_coin,current_trade))
 
-from memory_profiler import profile
 
-@profile
+
 def main_execution():
     coin = input("Please enter the coin name: ")
     coin = coin.upper()
