@@ -175,31 +175,35 @@ async def main(shared_coin,current_trade):
             df_copy = df.copy()
             signal = get_signal(super_df)
             #super_df.to_csv('super_df.csv',index=False,mode='w+')
-            current_signal = signal
-            prev_signal = get_prev_signal(super_df)
+            current_signal_short = signal
+            prev_signal_short = get_prev_signal(super_df)
 
             trade_df = create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
             
+            pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2, pivot_period = 2)
+            pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
+            pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
+            current_pivot_signal = pivot_signal
+            prev_pivot_signal = get_prev_pivot_supertrend_signal(pivot_super_df)
 
-            print(f'Prev PivotSuperTrend signal : {prev_pivot_signal},Prev SuperTrend Signal : {prev_signal}' )
+            super_df = pivot_super_df
 
-            notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
-            notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
-            print(f'Current PivotSuperTrend signal : {current_pivot_signal}, SuperTrend Signal : {current_signal}' )
+            signal_long = get_signal(super_df)
+            current_signal_long = signal_long
+            prev_signal_long = get_prev_signal(super_df)
+
             
-            if current_signal != prev_signal: 
+            if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long): 
                 
                 close_any_open_positions(coin,client)
                 cancel_all_open_orders(coin,client)
-
                 middle_dc = get_middle_dc(client,coin)
                 entry =  get_entry(super_df)              
                 #over_all_trend = get_over_all_trend(coin)
                 lowerband = get_lowerband(super_df)
                 upperband = get_upperband(super_df)
 
-                dc_signal = get_dc_signal(entry, middle_dc, current_signal)
 
        
                 tradeConfig = TradeConfiguration()
@@ -214,7 +218,7 @@ async def main(shared_coin,current_trade):
                 if (current_pivot_signal !=prev_pivot_signal): 
                     change = 'longTerm'
                 
-                if (current_signal != prev_signal):
+                if (current_signal_short != prev_signal_short):
                     change = 'shortTerm'
                 
                 order = Order(coin = coin,
@@ -227,23 +231,13 @@ async def main(shared_coin,current_trade):
                             upperband = upperband
                             )
                        
-                if pivot_signal == 'Buy' and dc_signal == 'long':         
+                if current_signal_short == 'Buy' and current_signal_long == 'Buy':       
                     order.make_buy_trade(client) 
-                    current_trade.use_sl = 0
-                    notifier(f'signal : Buy , above DC middle')  
+                    notifier(f'ShortTerm : Buy , LongTerm : Buy => Bought')  
 
-                elif pivot_signal == 'Sell' and dc_signal == 'long':
-                    prev_perc = trade_df.iloc[-2]['percentage']
-                    if prev_perc > 0:
-                        order.quantity = round(order.quantity/1.5, current_trade.round_quantity)
-                        order.make_buy_trade(client)
-                        current_trade.use_sl = 1
-                        notifier(f'signal : Sell , above DC middle, still in trend so buying')
-                    else:
-                        order.make_sell_trade(client)
-                        current_trade.use_sl = 0
-                        notifier(f'signal : Sell , above DC middle, may not be in trend so selling')
-                    
+                elif current_signal_short == 'Sell' and current_signal_long == 'Buy':
+                    order.make_buy_trade(client) 
+                    notifier(f'ShortTerm : Sell , LongTerm : Buy => Bought')
                     
                 # elif pivot_signal == 'Buy' and signal == 'Sell':
                 #     order.quantity = round(order.quantity/2, current_trade.round_quantity)
@@ -251,23 +245,14 @@ async def main(shared_coin,current_trade):
                 #     order.make_sell_trade(client)
                     
                 
-                elif pivot_signal == 'Sell' and dc_signal == 'short':   
+                elif current_signal_short == 'Sell' and current_signal_long == 'Sell':   
                     order.make_sell_trade(client)
-                    current_trade.use_sl = 0
-                    notifier(f'signal : Sell , below DC middle')
+                    notifier(f'ShortTerm : Sell , LongTerm : Sell => Sold')
 
-                elif pivot_signal == 'Buy' and dc_signal == 'short':
-                    prev_perc = trade_df.iloc[-2]['percentage']
-                    if prev_perc > 0:
-                        order.quantity = round(order.quantity/1.5, current_trade.round_quantity)
-                        order.make_sell_trade(client)
-                        current_trade.use_sl = 1
-                        notifier(f'signal : Buy , below DC middle, still in down trend so selling')
-                    else:
-                        order.make_buy_trade(client)
-                        current_trade.use_sl = 0
-                        notifier(f'signal : Buy , below DC middle, prev sell loss so may not in down trend so buying')
-                    
+                elif current_signal_short == 'Buy' and current_signal_long == 'Sell':
+                    order.make_sell_trade(client)
+                    notifier(f'ShortTerm : Buy , LongTerm : Sell => Sold')
+
                     
                 # elif pivot_signal == 'Sell' and signal == 'Buy':
                 #     order.quantity = round(order.quantity/2, current_trade.round_quantity)
@@ -276,29 +261,24 @@ async def main(shared_coin,current_trade):
                 else:
                     notifier(f'Something is wrong...Debug')      
             
-            else:
-                pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2, pivot_period = 2)
-                pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
-                pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
-                current_pivot_signal = pivot_signal
-                prev_pivot_signal = get_prev_pivot_supertrend_signal(pivot_super_df)
+            
+               
 
-                super_df = pivot_super_df
-
-                signal = get_signal(super_df)
-                current_signal = signal
-                prev_signal = get_prev_signal(super_df)
-
-                if current_signal != prev_signal and current_trade.use_sl == 1:
-                    close_any_open_positions(coin,client)
-                    cancel_all_open_orders(coin,client)
-                    notifier(f"Stoploss Hit for {coin}")
 
         
         
         return df
 
 
+    async def on_error(ws, error):
+        notifier(f"WebSocket Error: {error} {coin}")
+
+    async def on_close(ws, close_status_code, close_msg):
+        notifier(f"WebSocket connection closed. {coin}" )
+
+    async def stop_ws(ws):
+        print(f"Stopping websocket after {60} seconds. {coin}")
+        ws.close()
 
     async def listen(df,current_trade):
         check_for_volatilte_coin = current_trade.check_for_volatilte_coin
@@ -391,20 +371,27 @@ async def main(shared_coin,current_trade):
                     order.make_sell_trade(client)
                     notifier(f'Made a sell trade when for {coin}')
 
+        TIMEOUT_SECONDS = 30
+
         stream = f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}"
         notifier(f'new stream : {stream}')
         async with websockets.connect(stream) as ws:
             try:
                 while True:
-                    message = await ws.recv()
+                    message = await asyncio.wait_for(ws.recv(), timeout=TIMEOUT_SECONDS)
                     df = await on_message(message,df,current_trade)
                     if check_for_volatilte_coin == 1:
                         if coin != shared_coin.value:
                             break
                     
                     
+            except asyncio.TimeoutError:
+                notifier(f"No message received for the past 30 seconds! for {coin}") 
+                await asyncio.sleep(10)
+                df = await listen(df,current_trade)
+
             except websockets.ConnectionClosed:
-                print("WebSocket connection closed. Attempting to reconnect...")
+                notifier("WebSocket connection closed. Attempting to reconnect...")
                 await asyncio.sleep(10)
                 df = await listen(df,current_trade)
         return df
@@ -420,6 +407,7 @@ async def main(shared_coin,current_trade):
             df = await listen(df,current_trade)
         except Exception as e:
             print(f"Error: {e}. Retrying in 10 seconds...")
+            notifier(f"Error: {e}. Retrying in 10 seconds...")
             await asyncio.sleep(10)
 
 
@@ -429,10 +417,10 @@ async def main(shared_coin,current_trade):
 def run_async_main(shared_coin,current_trade):
         asyncio.run(main(shared_coin,current_trade))
 
+from memory_profiler import profile
 
-
-if __name__ == "__main__":
-    
+@profile
+def main_execution():
     coin = input("Please enter the coin name: ")
     coin = coin.upper()
     stake = float(input("Enter the stake :"))
@@ -459,12 +447,17 @@ if __name__ == "__main__":
 
     
 
-    p1 = Process(target=get_coin, args=(shared_coin,))
+    #p1 = Process(target=get_coin, args=(shared_coin,))
     p2 = Process(target=run_async_main, args=(shared_coin,current_trade))
 
 
-    p1.start()
+    #p1.start()
     p2.start()
-    p1.join()
+   # p1.join()
     p2.join()
+
+if __name__ == "__main__":
+    main_execution()
+    
+    
 
