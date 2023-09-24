@@ -1,5 +1,3 @@
-from functions import notifier
-
 class TradeConfiguration:
     def __init__(self):
         self.buy_risk = 0.02  #0.0213
@@ -18,7 +16,7 @@ class TradeConfiguration:
             else:
                 risk = self.sell_risk
             
-        #notifier(f'Overall Trend is {over_all_trend} and Current Trend is {current_signal}, so risk is set to {risk}')
+        ##notifier(f'Overall Trend is {over_all_trend} and Current Trend is {current_signal}, so risk is set to {risk}')
         return risk   
     
 class PivotSuperTrendConfiguration():
@@ -59,12 +57,12 @@ class Order:
         client.futures_create_order(symbol=f'{self.coin}USDT', side='BUY', type='MARKET', quantity=self.quantity, dualSidePosition=True, positionSide='LONG')
              
         if self.change == 'longTerm':
-            notifier(f'Pivot SuperTrend Changed')
+            #notifier(f'Pivot SuperTrend Changed')
             self.take_profit = self.entry+((self.entry*0.0213))
         else:
             self.take_profit = self.entry+((self.entry*0.06))
 
-        notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
+        #notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
         
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
@@ -80,8 +78,8 @@ class Order:
                                     workingType='MARK_PRICE',
                                     priceProtect=True
                                 )
-        notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
-        notifier(f'Buy order placed for coin :{self.coin}, TP : {self.take_profit}')
+        #notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
+        #notifier(f'Buy order placed for coin :{self.coin}, TP : {self.take_profit}')
         
     def make_sell_trade(self,client):
         
@@ -95,12 +93,12 @@ class Order:
                                     )
         
         if self.change == 'longTerm':
-            notifier(f'Pivot SuperTrend Changed')
+            #notifier(f'Pivot SuperTrend Changed')
             self.take_profit = self.entry-((self.entry*0.0213))
         else:
             self.take_profit = self.entry-((self.entry*0.0411))
 
-        notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
+        #notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
         
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
@@ -117,8 +115,8 @@ class Order:
                                     priceProtect=True
                                )
         
-        notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
-        notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
+        #notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
+        #notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
         
     def make_inverse_buy_trade(self,client):
         client.futures_create_order(symbol=f'{self.coin}USDT', side='BUY', type='MARKET', quantity=self.quantity, dualSidePosition=True, positionSide='LONG')
@@ -129,7 +127,7 @@ class Order:
 
         stop_loss = self.entry - (1.6 * difference)
 
-        notifier(f'take profit : {self.take_profit},round : {self.round_price} ,after round : {round(self.take_profit, self.round_price)},difference : {difference} , 2nd entry : {stop_loss}')
+        #notifier(f'take profit : {self.take_profit},round : {self.round_price} ,after round : {round(self.take_profit, self.round_price)},difference : {difference} , 2nd entry : {stop_loss}')
 
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
@@ -146,7 +144,7 @@ class Order:
                                     priceProtect=True
                                 )
         
-        notifier(f'Placed Take Profit order for long position')
+        #notifier(f'Placed Take Profit order for long position')
 
         client.futures_create_order(
                             symbol=f'{self.coin}USDT',
@@ -159,12 +157,12 @@ class Order:
                             workingType='MARK_PRICE'
                             )
         
-        notifier(f'Placed Buy Limit order for long position at {round(stop_loss, self.round_price)}')
+        #notifier(f'Placed Buy Limit order for long position at {round(stop_loss, self.round_price)}')
 
 
 
-        notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
-        notifier(f'Buy order placed for coin :{self.coin}, TP : {self.take_profit}')
+        #notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
+        #notifier(f'Buy order placed for coin :{self.coin}, TP : {self.take_profit}')
 
     def make_inverse_sell_trade(self,client):
         client.futures_create_order(
@@ -181,7 +179,7 @@ class Order:
 
         stop_loss = self.entry + (1.6 * difference)
 
-        notifier(f'take profit : {self.take_profit}, difference : {difference} , 2nd entry : {stop_loss}')
+        #notifier(f'take profit : {self.take_profit}, difference : {difference} , 2nd entry : {stop_loss}')
         
         client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
@@ -198,7 +196,7 @@ class Order:
                                     priceProtect=True
                                )
         
-        notifier(f'Placed Take Profit order for short position')
+        #notifier(f'Placed Take Profit order for short position')
 
         # client.futures_create_order(
         #                             symbol=f'{self.coin}USDT',
@@ -223,9 +221,9 @@ class Order:
                             workingType='MARK_PRICE'
                             )
         
-        notifier(f'Placed Take Stoploss market order for short position')
-        notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
-        notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
+        #notifier(f'Placed Take Stoploss market order for short position')
+        #notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
+        #notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
 
 class CurrentTrade:
     def __init__(self,coin,stake,timeframe,use_sl,round_quantity = None,round_price = None,check_for_volatilte_coin=0):
