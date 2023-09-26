@@ -23,8 +23,8 @@ def create_df(klines,cols,coin,timeframe='_'):
     df['year']=[x.year for x in df['OpenTime']]
     
     df=df[['OpenTime','hour','minute','day','month','year','open','high','low','close','volume']]
-    print(f'Gathering {coin}_{timeframe}.csv')
-    print(f'Retrived {df.shape[0]} candlestick data')
+    #print(f'Gathering {coin}_{timeframe}.csv')
+    #print(f'Retrived {df.shape[0]} candlestick data')
     return df
 
 

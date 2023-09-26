@@ -3,6 +3,7 @@ import hashlib
 import requests
 import time
 from binance.client import Client
+import os
 
 from data_extraction import *
 import config
@@ -11,6 +12,7 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email import encoders
 from email.mime.text import MIMEText
+from modules import PivotSuperTrendConfiguration
 
 client=Client(config.api_key,config.secret_key)
 
@@ -98,7 +100,7 @@ def notifier(message, tries=5, base_sleep=1):
             print(f'Telegram notifier encountered an error: {e}. Try number: {try_num + 1}')
 
         # Exponential backoff
-        time.sleep(base_sleep * (2 ** try_num))
+        time.sleep(base_sleep * try_num)
         
     print(f'Failed to send message after {tries} attempts.')
 
@@ -1067,7 +1069,51 @@ from binance.client import Client
 logging.basicConfig(filename='trading_data_log.txt',  filemode='a',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def get_coin(shared_coin,sleep_time=3600):
+def get_coins(data):
+    coins = []
+    daily_volatilites = []
+    monthly_volatilites = []
+    weekly_volatilites = []
+    highs = []
+    lows = []
+    opens = []
+    for i in data['data']:
+        coin = i['d'][2].split('.')[0]
+        daily_volatility = i['d'][4]
+        monthly_volatility = i['d'][5]
+        weekly_volatility = i['d'][6]
+        high = i['d'][9]
+        low = i['d'][10]
+        open_ = i['d'][11]
+        coins.append(coin)
+        daily_volatilites.append(daily_volatility)
+        monthly_volatilites.append(monthly_volatility)
+        weekly_volatilites.append(weekly_volatility)
+        highs.append(high)
+        lows.append(low)
+        opens.append(open_)
+    df_vol = pd.DataFrame(zip(coins,daily_volatilites,monthly_volatilites,weekly_volatilites,highs,lows,opens),columns=['coin', 'volatility_d','volatility_m','volatility_w','high','low','open'])
+    df_vol['time'] = datetime.now()
+    df_vol['coin'] = df_vol['coin'].str.split('USDT').str[0]
+    df_vol['max_perc'] = (df_vol['high'] - df_vol['open'])/df_vol['open']
+    df_vol['low_perc'] = -((df_vol['open'] - df_vol['low'])/df_vol['open'])
+    long_df = df_vol.sort_values(by='max_perc',ascending = False)
+    short_df = df_vol.sort_values(by='low_perc',ascending = True)
+    volatility_df = df_vol.sort_values(by='volatility_d',ascending = False)
+    
+    long_df = long_df[long_df['max_perc'] > 0.0321]
+    short_df = short_df[short_df['low_perc'] < -0.0321]
+    volatility_df = volatility_df[volatility_df['volatility_d']>6]
+    
+    possible_long = list(long_df['coin'])
+    possible_short = list(short_df['coin'])
+    possible_volatile = list(volatility_df['coin'])
+    
+    
+    return possible_long,possible_short,possible_volatile
+
+
+def get_scaner_data(sleep_time=3600):
     url = "https://scanner.tradingview.com/crypto/scan"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36",
@@ -1102,7 +1148,7 @@ def get_coin(shared_coin,sleep_time=3600):
     },
     "columns": [
         "base_currency_logoid", "currency_logoid", "name", "close", "Volatility.D", "Volatility.M", "Volatility.W",
-        "change|60", "change", "description", "type", "subtype", "update_mode", "exchange", "pricescale", "minmov",
+        "change|60","change","high","low","open", "description", "type", "subtype", "update_mode", "exchange", "pricescale", "minmov",
         "fractional", "minmove2"
     ],
     "sort": {
@@ -1120,15 +1166,12 @@ def get_coin(shared_coin,sleep_time=3600):
             if response.status_code == 200:
                 data = response.json()
                 logging.info("Data fetched successfully")
-                shared_coin.value = 'BLZ'
-                #shared_coin.value = select_coin(data)
+                return data
                 time.sleep(sleep_time)
             else:
                 logging.error(f"Error {response.status_code}: {response.text}")
         except requests.RequestException as e:
             logging.error(f"Request failed: {e}")
-
-
 def select_coin(data):
     coins = []
     daily_volatilites = []
@@ -1148,5 +1191,347 @@ def select_coin(data):
     df_vol['coin'] = df_vol['coin'].str.split('USDT').str[0]
     return df_vol.sort_values(by="volatility_w",ascending=False).iloc[0]['coin']
 
+def dataextract_bybit(coin,start_str,end_str,interval_):
+    
+    str_date = datetime.strptime(start_str, '%b %d,%Y')
+    end_str = datetime.strptime(end_str, '%b %d,%Y')
+    
+    timeframe = interval_
+    
+    timeframe_mapping = {
+    '5m': 5,
+    '15m': 15,
+    '30m': 30,
+    '45m': 45,
+    '1h': 60,
+    '2h': 120,
+    '4h': 240,
+    '1d': 'D'  
+}
+
+    timeframe = timeframe_mapping.get(timeframe, None)
+        
+    start_timestamp_millis = int(str_date.timestamp() * 1000)
+    end_timestamp_millis = int(end_str.timestamp() * 1000)
+    
+    url = "https://api.bybit.com/derivatives/v3/public/kline"
+    params = {
+        "category": "linear",
+        "symbol": f"{coin}USDT",
+        "interval": str(timeframe),
+        "start": str(start_timestamp_millis),
+        "end": str(end_timestamp_millis),
+        "limit" : 251
+    }
+
+    response = requests.get(url, params=params)
+
+    # If you want the JSON response:
+    data = response.json()
+    klines = data['result']['list']
+    
+    df = pd.DataFrame(klines,columns = ['OpenTime','open','high','low','close','volume','turnover'])
+    for col in ['open','high','low','close']:
+        df[col] = df[col].astype(float)
+    df['OpenTime']=[datetime.fromtimestamp(int(x)/1000) for x in df['OpenTime']]
+    df['hour']=[x.hour for x in df['OpenTime']]
+    df['minute']=[x.minute for x in df['OpenTime']]
+    df['day']=[x.day for x in df['OpenTime']]
+    df['month']=[x.month for x in df['OpenTime']]
+    df['year']=[x.year for x in df['OpenTime']]
+    df=df[['OpenTime','hour','minute','day','month','year','open','high','low','close','volume']]
+    df = df.iloc[::-1].reset_index(drop=True)
+    OpenTime = df.iloc[-1]['OpenTime']
+    return df
 
 
+def is_long_tradable(coin,timeframe):
+    
+    timeframe_mapping = {
+    '5m': (2, 30),
+    '15m': (3, 15),
+    '30m': (7, 9),
+    '45m': (10, 6),  # Example values; adjust as needed
+    '1h': (14, 4),   # Example values; adjust as needed
+    '2h': (20, 2),   # Example values; adjust as needed
+    '4h': (30, 1)    # Example values; adjust as needed
+}
+
+    look_back_days, candle_count_filter = timeframe_mapping.get(timeframe, (40, 1))
+        
+    client=Client(config.api_key,config.secret_key)
+    str_date = (datetime.now()- timedelta(days=look_back_days)).strftime('%b %d,%Y')
+    end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
+
+    path = os.path.join("data", coin)
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    if timeframe in ['45m','2h','4h']:
+        #df = dataextract_bybit(coin,str_date,end_str,timeframe)   
+        df=dataextract(coin,str_date,end_str,timeframe,client)
+    else:
+        df=dataextract(coin,str_date,end_str,timeframe,client)
+
+    #df.to_csv(f'data/{coin}/{coin}_{timeframe}.csv',mode='w+',index=False)
+
+    df= df.iloc[:-1]
+
+    df_copy = df.copy()
+
+    pivot_st = PivotSuperTrendConfiguration()
+    pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
+    pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
+    current_signal_short = pivot_signal
+    prev_signal_short = get_prev_pivot_supertrend_signal(pivot_super_df)
+    trade_df_short= create_signal_df(pivot_super_df,df,coin,timeframe,pivot_st.atr_multiplier,pivot_st.pivot_period,100,100)
+
+    #long trend
+    pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2.6, pivot_period = 2)
+    pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
+    pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
+    current_pivot_signal = pivot_signal
+    prev_pivot_signal = get_prev_pivot_supertrend_signal(pivot_super_df)
+    super_df = pivot_super_df
+    signal_long = get_signal(super_df)
+    current_signal_long = signal_long
+    prev_signal_long = get_prev_pivot_supertrend_signal(pivot_super_df)
+    trade_df_long= create_signal_df(pivot_super_df,df,coin,timeframe,pivot_st.atr_multiplier,pivot_st.pivot_period,100,100)
+
+    candle_count = trade_df_long.iloc[-1]['candle_count']
+    if candle_count < candle_count_filter:
+        return False
+    
+    
+    #check if tradabale
+    if current_signal_long == 'Buy' and current_signal_short == 'Sell':
+        if current_signal_short != prev_signal_short:
+            long_trend_openTime = pd.to_datetime(trade_df_long.iloc[-1]['TradeOpenTime'])
+            inverse_trades = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].shape[0]
+            
+            ema_series = talib.EMA(super_df['close'], 200)
+            ema = ema_series.iloc[-1]
+
+            upperband = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].iloc[-1]['upperband']
+            lowerband = pivot_super_df.iloc[-1]['lowerband']
+            entry = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].iloc[-1]['entry']
+
+            tp = (upperband - entry)
+            sl = (entry - lowerband)
+            ratio = tp/sl
+            if  ratio < 0.06:
+                return 0
+            else:
+                prev_percentage = trade_df_short.iloc[-1]['prev_percentage']
+                if prev_percentage < 0 or inverse_trades > 2:
+                    print(f'{coin} prev_percentage less 0 or current long term has soon more than 2 reversals')
+                    return 1 #less stake
+                if trade_df_long.iloc[-1]['prev_percentage'] > 0:
+                    print(f'{coin} Previous long term was greater than 0, so this could not hold')
+                    return 1 #less stake
+                if trade_df_short.iloc[-1] < ema:
+                    print(f'{coin} entry less than ema')
+                    return 1
+
+                return 2
+        else:
+            return 0
+
+    else:
+        return 0
+
+def is_volatile_tradable(coin,timeframe):
+    
+    timeframe_mapping = {
+    '5m': (2, 30),
+    '15m': (3, 15),
+    '30m': (7, 9),
+    '45m': (10, 6),  # Example values; adjust as needed
+    '1h': (14, 4),   # Example values; adjust as needed
+    '2h': (20, 2),   # Example values; adjust as needed
+    '4h': (30, 1)    # Example values; adjust as needed
+}
+
+    look_back_days, candle_count_filter = timeframe_mapping.get(timeframe, (40, 1))
+        
+    client=Client(config.api_key,config.secret_key)
+    str_date = (datetime.now()- timedelta(days=look_back_days)).strftime('%b %d,%Y')
+    end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
+
+    path = os.path.join("data", coin)
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    if timeframe in ['1h','2h','4h']:
+        #df = dataextract_bybit(coin,str_date,end_str,timeframe)  
+        df=dataextract(coin,str_date,end_str,timeframe,client) 
+    else:
+        df=dataextract(coin,str_date,end_str,timeframe,client)
+
+    df.to_csv(f'data/{coin}/{coin}_{timeframe}.csv',mode='w+',index=False)
+
+    df= df.iloc[:-1]
+
+    df_copy = df.copy()
+
+    pivot_st = PivotSuperTrendConfiguration()
+    pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
+    pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
+    current_signal_short = pivot_signal
+    prev_signal_short = get_prev_pivot_supertrend_signal(pivot_super_df)
+    trade_df_short= create_signal_df(pivot_super_df,df,coin,timeframe,pivot_st.atr_multiplier,pivot_st.pivot_period,100,100)
+
+    #long trend
+    pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2.6, pivot_period = 2)
+    pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
+    pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
+    current_pivot_signal = pivot_signal
+    prev_pivot_signal = get_prev_pivot_supertrend_signal(pivot_super_df)
+    super_df = pivot_super_df
+    signal_long = get_signal(super_df)
+    current_signal_long = signal_long
+    prev_signal_long = get_prev_pivot_supertrend_signal(pivot_super_df)
+    trade_df_long= create_signal_df(pivot_super_df,df,coin,timeframe,pivot_st.atr_multiplier,pivot_st.pivot_period,100,100)
+
+    candle_count = trade_df_long.iloc[-1]['candle_count']
+    if candle_count < candle_count_filter:
+        return 0,current_signal_long
+    
+    
+    #check if tradabale
+    if current_signal_long != current_signal_short:
+        if current_signal_short != prev_signal_short:
+            long_trend_openTime = trade_df_long.iloc[-1]['TradeOpenTime']
+            inverse_trades = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].shape[0]
+            
+
+            upperband = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].iloc[-1]['upperband']
+            lowerband = pivot_super_df.iloc[-1]['lowerband']
+            entry = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].iloc[-1]['entry']
+
+            if current_signal_long == 'Buy':
+                tp = (upperband - entry)
+                sl = (entry - lowerband)
+            else:
+                sl = (upperband - entry)
+                tp = (entry - lowerband)
+
+            ratio = tp/sl
+            if  ratio < 0.06:
+                return 0,current_signal_long
+            else:
+                prev_percentage = trade_df_short.iloc[-1]['prev_percentage']
+                if prev_percentage < 0.0114 or inverse_trades > 2:
+                    print(f'Less stake for : {coin}')
+
+                return 2,current_signal_long
+        else:
+            return 0,current_signal_long
+
+    else:
+        return 0,current_signal_long
+
+
+def is_short_tradable(coin,timeframe):
+
+    print(coin,timeframe)
+    
+    timeframe_mapping = {
+    '5m': (2, 30),
+    '15m': (3, 15),
+    '30m': (7, 9),
+    '45m': (10, 6),  # Example values; adjust as needed
+    '1h': (14, 4),   # Example values; adjust as needed
+    '2h': (20, 2),   # Example values; adjust as needed
+    '4h': (30, 1)    # Example values; adjust as needed
+}
+
+    look_back_days, candle_count_filter = timeframe_mapping.get(timeframe, (40, 1))
+        
+    client=Client(config.api_key,config.secret_key)
+    str_date = (datetime.now()- timedelta(days=look_back_days)).strftime('%b %d,%Y')
+    end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
+
+    path = os.path.join("data", coin)
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    if timeframe in ['1h','2h','4h']:
+        #df = dataextract_bybit(coin,str_date,end_str,timeframe)  
+        df=dataextract(coin,str_date,end_str,timeframe,client) 
+    else:
+        df=dataextract(coin,str_date,end_str,timeframe,client)
+
+    df.to_csv(f'data/{coin}/{coin}_{timeframe}.csv',mode='w+',index=False)
+
+    df= df.iloc[:-1]
+
+    df_copy = df.copy()
+
+    pivot_st = PivotSuperTrendConfiguration()
+    pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
+    pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
+    current_signal_short = pivot_signal
+    prev_signal_short = get_prev_pivot_supertrend_signal(pivot_super_df)
+    trade_df_short= create_signal_df(pivot_super_df,df,coin,timeframe,pivot_st.atr_multiplier,pivot_st.pivot_period,100,100)
+
+    #long trend
+    pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2.6, pivot_period = 2)
+    pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
+    pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
+    current_pivot_signal = pivot_signal
+    prev_pivot_signal = get_prev_pivot_supertrend_signal(pivot_super_df)
+    super_df = pivot_super_df
+    signal_long = get_signal(super_df)
+    current_signal_long = signal_long
+    prev_signal_long = get_prev_pivot_supertrend_signal(pivot_super_df)
+    trade_df_long= create_signal_df(pivot_super_df,df,coin,timeframe,pivot_st.atr_multiplier,pivot_st.pivot_period,100,100)
+
+    candle_count = trade_df_long.iloc[-1]['candle_count']
+    if candle_count < candle_count_filter:
+        return False
+    
+    
+
+    if current_signal_long == 'Sell' and current_signal_short == 'Buy':
+        if current_signal_short != prev_signal_short:
+            long_trend_openTime = trade_df_long.iloc[-1]['TradeOpenTime']
+            inverse_trades = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].shape[0]
+
+            lowerband = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].iloc[-1]['lowerband']
+            upperband = pivot_super_df.iloc[-1]['upperband']
+
+            entry = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].iloc[-1]['entry']
+            prev_percentage = trade_df_short[trade_df_short['TradeOpenTime'] < long_trend_openTime].iloc[-1]['prev_percentage']
+
+            tp = (entry - lowerband)
+            sl = (upperband - entry)
+            ratio = tp/sl
+
+            ema_series = talib.EMA(super_df['close'], 200)
+            ema = ema_series.iloc[-1]
+
+            if  ratio < 0.06:
+                return 0
+            else:
+                prev_percentage = trade_df_short.iloc[-1]['prev_percentage']
+                if prev_percentage < 0 or inverse_trades > 2:
+                    print(f'{coin} prev_percentage less 0 or current long term has soon more than 2 reversals')
+                    return 1
+            
+                if trade_df_long.iloc[-1]['prev_percentage'] > 0:
+                    print(f'{coin} Previous long term was greater than 0, so this could not hold')
+                    return 1 #less stake
+                if trade_df_short.iloc[-1] > ema:
+                    print(f'{coin} entry greater than ema risk to short')
+                    return 1
+                
+                return 2
+        else:
+            return 0
+
+    else:
+        return False

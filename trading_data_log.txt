@@ -71,3 +71,175 @@ Traceback (most recent call last):
 AttributeError: 'NoneType' object has no attribute 'send'
 2023-09-21 01:34:18,509 - ERROR - Task was destroyed but it is pending!
 task: <Task pending name='Task-5' coro=<WebSocketCommonProtocol.close_connection() running at C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py:1299> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x00000242AB371C10>()]> cb=[_gather.<locals>._done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:767, shield.<locals>._inner_done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:890]>
+2023-09-21 09:18:10,191 - ERROR - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x000001F033826190>
+transport: <_ProactorSocketTransport fd=2504 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\ProgramData\Anaconda3\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 359, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 395, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'
+2023-09-21 09:18:10,212 - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-5' coro=<WebSocketCommonProtocol.close_connection() running at C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py:1299> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x000001F0337E60D0>()]> cb=[_gather.<locals>._done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:767, shield.<locals>._inner_done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:890]>
+2023-09-21 18:31:36,440 - ERROR - data transfer failed
+Traceback (most recent call last):
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 945, in transfer_data
+    message = await self.read_message()
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1015, in read_message
+    frame = await self.read_data_frame(max_size=self.max_size)
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1090, in read_data_frame
+    frame = await self.read_frame(max_size)
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1145, in read_frame
+    frame = await Frame.read(
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\framing.py", line 70, in read
+    data = await reader(2)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\streams.py", line 723, in readexactly
+    await self._wait_for_data('readexactly')
+  File "C:\ProgramData\Anaconda3\lib\asyncio\streams.py", line 517, in _wait_for_data
+    await self._waiter
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 280, in _loop_reading
+    data = fut.result()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 817, in _poll
+    value = callback(transferred, key, ov)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 462, in finish_recv
+    return ov.getresult()
+OSError: [WinError 121] The semaphore timeout period has expired
+2023-09-23 03:14:40,211 - ERROR - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x000001A5C5D940D0>
+transport: <_ProactorSocketTransport fd=2320 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\ProgramData\Anaconda3\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 359, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 395, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'
+2023-09-23 03:14:40,232 - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-5' coro=<WebSocketCommonProtocol.close_connection() running at C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py:1299> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x000001A5C5D3DB50>()]> cb=[_gather.<locals>._done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:767, shield.<locals>._inner_done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:890]>
+2023-09-24 01:33:53,048 - INFO - Data fetched successfully
+2023-09-24 01:35:02,115 - INFO - Data fetched successfully
+2023-09-24 01:35:19,025 - INFO - Data fetched successfully
+2023-09-24 01:37:35,086 - INFO - Data fetched successfully
+2023-09-24 01:49:36,909 - INFO - Data fetched successfully
+2023-09-24 01:49:37,621 - INFO - Data fetched successfully
+2023-09-24 01:50:32,586 - INFO - Data fetched successfully
+2023-09-24 01:54:25,001 - INFO - Data fetched successfully
+2023-09-24 02:01:00,818 - INFO - Data fetched successfully
+2023-09-24 02:30:00,700 - INFO - Data fetched successfully
+2023-09-24 02:32:31,205 - INFO - Data fetched successfully
+2023-09-24 02:49:30,706 - INFO - Data fetched successfully
+2023-09-24 02:49:31,426 - INFO - Data fetched successfully
+2023-09-24 02:49:32,168 - INFO - Data fetched successfully
+2023-09-24 02:49:32,966 - INFO - Data fetched successfully
+2023-09-24 02:49:33,662 - INFO - Data fetched successfully
+2023-09-24 02:49:34,366 - INFO - Data fetched successfully
+2023-09-24 02:49:35,052 - INFO - Data fetched successfully
+2023-09-24 02:49:35,740 - INFO - Data fetched successfully
+2023-09-24 02:49:36,541 - INFO - Data fetched successfully
+2023-09-24 02:49:37,259 - INFO - Data fetched successfully
+2023-09-24 02:49:37,993 - INFO - Data fetched successfully
+2023-09-24 02:49:38,620 - INFO - Data fetched successfully
+2023-09-24 02:49:39,292 - INFO - Data fetched successfully
+2023-09-24 02:49:39,878 - INFO - Data fetched successfully
+2023-09-24 02:49:40,453 - INFO - Data fetched successfully
+2023-09-24 02:50:21,815 - INFO - Data fetched successfully
+2023-09-24 02:51:20,242 - INFO - Data fetched successfully
+2023-09-24 02:52:09,518 - INFO - Data fetched successfully
+2023-09-24 02:57:21,045 - INFO - Data fetched successfully
+2023-09-24 03:22:10,170 - INFO - Data fetched successfully
+2023-09-24 03:30:29,028 - ERROR - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x000002D775463AF0>
+transport: <_ProactorSocketTransport fd=1764 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\ProgramData\Anaconda3\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 359, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 395, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'
+2023-09-24 03:30:29,042 - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-5' coro=<WebSocketCommonProtocol.close_connection() running at C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py:1299> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x000002D7754881C0>()]> cb=[_gather.<locals>._done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:767, shield.<locals>._inner_done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:890]>
+2023-09-24 03:44:04,217 - INFO - Data fetched successfully
+2023-09-24 03:44:42,104 - INFO - Data fetched successfully
+2023-09-24 03:47:32,619 - INFO - Data fetched successfully
+2023-09-24 03:49:42,741 - INFO - Data fetched successfully
+2023-09-24 03:50:24,315 - INFO - Data fetched successfully
+2023-09-24 03:53:22,446 - INFO - Data fetched successfully
+2023-09-24 03:54:34,308 - INFO - Data fetched successfully
+2023-09-24 04:01:06,450 - INFO - Data fetched successfully
+2023-09-24 04:12:54,072 - INFO - Data fetched successfully
+2023-09-24 04:13:19,353 - INFO - Data fetched successfully
+2023-09-24 04:31:09,484 - INFO - Data fetched successfully
+2023-09-24 07:02:19,982 - INFO - Data fetched successfully
+2023-09-24 07:07:34,792 - INFO - Data fetched successfully
+2023-09-24 07:26:00,573 - INFO - Data fetched successfully
+2023-09-24 08:54:31,844 - INFO - Data fetched successfully
+2023-09-24 10:35:05,881 - INFO - Data fetched successfully
+2023-09-24 11:29:24,863 - INFO - Data fetched successfully
+2023-09-24 11:39:24,309 - INFO - Data fetched successfully
+2023-09-24 11:48:13,565 - INFO - Data fetched successfully
+2023-09-24 12:02:25,347 - INFO - Data fetched successfully
+2023-09-24 12:16:42,078 - INFO - Data fetched successfully
+2023-09-24 12:31:25,752 - INFO - Data fetched successfully
+2023-09-24 13:03:28,162 - INFO - Data fetched successfully
+2023-09-24 13:21:24,737 - INFO - Data fetched successfully
+2023-09-24 20:13:25,570 - INFO - Data fetched successfully
+2023-09-24 20:25:08,384 - INFO - Data fetched successfully
+2023-09-24 20:32:56,950 - INFO - Data fetched successfully
+2023-09-24 20:47:20,344 - INFO - Data fetched successfully
+2023-09-24 21:03:22,967 - INFO - Data fetched successfully
+2023-09-24 21:11:04,651 - INFO - Data fetched successfully
+2023-09-24 21:16:56,241 - INFO - Data fetched successfully
+2023-09-24 22:25:49,029 - INFO - Data fetched successfully
+2023-09-24 22:32:06,462 - INFO - Data fetched successfully
+2023-09-24 23:37:30,263 - INFO - Data fetched successfully
+2023-09-25 00:47:18,999 - INFO - Data fetched successfully
+2023-09-25 00:56:19,352 - INFO - Data fetched successfully
+2023-09-25 00:59:14,865 - INFO - Data fetched successfully
+2023-09-25 01:04:07,968 - INFO - Data fetched successfully
+2023-09-25 01:12:01,849 - INFO - Data fetched successfully
+2023-09-25 01:18:58,667 - INFO - Data fetched successfully
+2023-09-25 01:21:49,139 - INFO - Data fetched successfully
+2023-09-25 01:24:03,090 - INFO - Data fetched successfully
+2023-09-25 01:31:35,193 - INFO - Data fetched successfully
+2023-09-25 01:46:40,103 - INFO - Data fetched successfully
+2023-09-25 02:02:04,356 - INFO - Data fetched successfully
+2023-09-25 02:18:48,303 - INFO - Data fetched successfully
+2023-09-25 03:08:29,304 - INFO - Data fetched successfully
+2023-09-25 03:10:39,187 - INFO - Data fetched successfully
+2023-09-25 03:14:15,738 - INFO - Data fetched successfully
+2023-09-25 03:18:22,935 - INFO - Data fetched successfully
+2023-09-25 03:23:44,216 - INFO - Data fetched successfully
+2023-09-25 03:27:19,653 - INFO - Data fetched successfully
+2023-09-25 03:29:51,793 - INFO - Data fetched successfully
+2023-09-25 03:46:33,236 - INFO - Data fetched successfully
+2023-09-25 04:16:22,506 - INFO - Data fetched successfully
+2023-09-25 04:32:33,495 - INFO - Data fetched successfully
+2023-09-25 07:04:16,196 - INFO - Data fetched successfully
+2023-09-25 08:44:41,528 - INFO - Data fetched successfully
+2023-09-25 08:56:03,892 - INFO - Data fetched successfully
+2023-09-25 11:04:57,106 - INFO - Data fetched successfully
+2023-09-26 00:41:07,659 - INFO - Data fetched successfully
+2023-09-26 01:12:09,500 - INFO - Data fetched successfully
+2023-09-26 01:33:09,077 - INFO - Data fetched successfully
+2023-09-26 02:26:10,381 - INFO - Data fetched successfully
+2023-09-26 02:55:05,954 - INFO - Data fetched successfully
+2023-09-26 03:13:39,861 - INFO - Data fetched successfully
+2023-09-26 03:18:20,669 - INFO - Data fetched successfully
+2023-09-26 03:50:14,221 - INFO - Data fetched successfully
+2023-09-26 04:02:06,037 - INFO - Data fetched successfully
+2023-09-26 04:17:31,611 - INFO - Data fetched successfully
+2023-09-26 04:19:16,710 - INFO - Data fetched successfully
+2023-09-26 04:22:06,777 - INFO - Data fetched successfully
+2023-09-26 04:23:41,733 - INFO - Data fetched successfully
+2023-09-26 04:25:16,340 - INFO - Data fetched successfully
+2023-09-26 04:31:39,572 - INFO - Data fetched successfully
+2023-09-26 04:38:14,330 - INFO - Data fetched successfully
+2023-09-26 04:43:15,043 - INFO - Data fetched successfully
+2023-09-26 04:47:04,133 - INFO - Data fetched successfully
+2023-09-26 05:17:47,590 - INFO - Data fetched successfully
