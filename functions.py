@@ -1269,11 +1269,12 @@ def is_long_tradable(coin,timeframe):
         os.makedirs(path)
 
     if timeframe in ['45m','2h','4h']:
-        df = dataextract_bybit(coin,str_date,end_str,timeframe)   
+        #df = dataextract_bybit(coin,str_date,end_str,timeframe)   
+        df=dataextract(coin,str_date,end_str,timeframe,client)
     else:
         df=dataextract(coin,str_date,end_str,timeframe,client)
 
-    df.to_csv(f'data/{coin}/{coin}_{timeframe}.csv',mode='w+',index=False)
+    #df.to_csv(f'data/{coin}/{coin}_{timeframe}.csv',mode='w+',index=False)
 
     df= df.iloc[:-1]
 
@@ -1287,7 +1288,7 @@ def is_long_tradable(coin,timeframe):
     trade_df_short= create_signal_df(pivot_super_df,df,coin,timeframe,pivot_st.atr_multiplier,pivot_st.pivot_period,100,100)
 
     #long trend
-    pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2, pivot_period = 2)
+    pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2.6, pivot_period = 2)
     pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
     pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
     current_pivot_signal = pivot_signal
@@ -1306,9 +1307,11 @@ def is_long_tradable(coin,timeframe):
     #check if tradabale
     if current_signal_long == 'Buy' and current_signal_short == 'Sell':
         if current_signal_short != prev_signal_short:
-            long_trend_openTime = trade_df_long.iloc[-1]['TradeOpenTime']
+            long_trend_openTime = pd.to_datetime(trade_df_long.iloc[-1]['TradeOpenTime'])
             inverse_trades = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].shape[0]
             
+            ema_series = talib.EMA(super_df['close'], 200)
+            ema = ema_series.iloc[-1]
 
             upperband = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].iloc[-1]['upperband']
             lowerband = pivot_super_df.iloc[-1]['lowerband']
@@ -1318,20 +1321,25 @@ def is_long_tradable(coin,timeframe):
             sl = (entry - lowerband)
             ratio = tp/sl
             if  ratio < 0.06:
-                print(ratio)
-                print(f'Bad ratio for coin : {coin}')
-                return False
+                return 0
             else:
                 prev_percentage = trade_df_short.iloc[-1]['prev_percentage']
-                if prev_percentage < 0.0114 or inverse_trades > 2:
-                    print(f'Less stake for : {coin}')
+                if prev_percentage < 0 or inverse_trades > 2:
+                    print(f'{coin} prev_percentage less 0 or current long term has soon more than 2 reversals')
+                    return 1 #less stake
+                if trade_df_long.iloc[-1]['prev_percentage'] > 0:
+                    print(f'{coin} Previous long term was greater than 0, so this could not hold')
+                    return 1 #less stake
+                if trade_df_short.iloc[-1] < ema:
+                    print(f'{coin} entry less than ema')
+                    return 1
 
-                return True
+                return 2
         else:
-            return False
+            return 0
 
     else:
-        return False
+        return 0
 
 def is_volatile_tradable(coin,timeframe):
     
@@ -1357,7 +1365,8 @@ def is_volatile_tradable(coin,timeframe):
         os.makedirs(path)
 
     if timeframe in ['1h','2h','4h']:
-        df = dataextract_bybit(coin,str_date,end_str,timeframe)   
+        #df = dataextract_bybit(coin,str_date,end_str,timeframe)  
+        df=dataextract(coin,str_date,end_str,timeframe,client) 
     else:
         df=dataextract(coin,str_date,end_str,timeframe,client)
 
@@ -1375,7 +1384,7 @@ def is_volatile_tradable(coin,timeframe):
     trade_df_short= create_signal_df(pivot_super_df,df,coin,timeframe,pivot_st.atr_multiplier,pivot_st.pivot_period,100,100)
 
     #long trend
-    pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2, pivot_period = 2)
+    pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2.6, pivot_period = 2)
     pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
     pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
     current_pivot_signal = pivot_signal
@@ -1388,7 +1397,7 @@ def is_volatile_tradable(coin,timeframe):
 
     candle_count = trade_df_long.iloc[-1]['candle_count']
     if candle_count < candle_count_filter:
-        return False
+        return 0,current_signal_long
     
     
     #check if tradabale
@@ -1402,27 +1411,32 @@ def is_volatile_tradable(coin,timeframe):
             lowerband = pivot_super_df.iloc[-1]['lowerband']
             entry = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].iloc[-1]['entry']
 
-            tp = (upperband - entry)
-            sl = (entry - lowerband)
+            if current_signal_long == 'Buy':
+                tp = (upperband - entry)
+                sl = (entry - lowerband)
+            else:
+                sl = (upperband - entry)
+                tp = (entry - lowerband)
+
             ratio = tp/sl
             if  ratio < 0.06:
-                print(ratio)
-                print(f'Bad ratio for coin : {coin}')
-                return False
+                return 0,current_signal_long
             else:
                 prev_percentage = trade_df_short.iloc[-1]['prev_percentage']
                 if prev_percentage < 0.0114 or inverse_trades > 2:
                     print(f'Less stake for : {coin}')
 
-                return True
+                return 2,current_signal_long
         else:
-            return False
+            return 0,current_signal_long
 
     else:
-        return False
+        return 0,current_signal_long
 
 
 def is_short_tradable(coin,timeframe):
+
+    print(coin,timeframe)
     
     timeframe_mapping = {
     '5m': (2, 30),
@@ -1446,7 +1460,8 @@ def is_short_tradable(coin,timeframe):
         os.makedirs(path)
 
     if timeframe in ['1h','2h','4h']:
-        df = dataextract_bybit(coin,str_date,end_str,timeframe)   
+        #df = dataextract_bybit(coin,str_date,end_str,timeframe)  
+        df=dataextract(coin,str_date,end_str,timeframe,client) 
     else:
         df=dataextract(coin,str_date,end_str,timeframe,client)
 
@@ -1464,7 +1479,7 @@ def is_short_tradable(coin,timeframe):
     trade_df_short= create_signal_df(pivot_super_df,df,coin,timeframe,pivot_st.atr_multiplier,pivot_st.pivot_period,100,100)
 
     #long trend
-    pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2, pivot_period = 2)
+    pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2.6, pivot_period = 2)
     pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
     pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
     current_pivot_signal = pivot_signal
@@ -1496,17 +1511,27 @@ def is_short_tradable(coin,timeframe):
             sl = (upperband - entry)
             ratio = tp/sl
 
+            ema_series = talib.EMA(super_df['close'], 200)
+            ema = ema_series.iloc[-1]
+
             if  ratio < 0.06:
-                print(ratio)
-                print(f'Bad ratio for coin : {coin}')
-                return False
+                return 0
             else:
                 prev_percentage = trade_df_short.iloc[-1]['prev_percentage']
-                if prev_percentage < 0.0114 or inverse_trades > 2:
-                    print(f'Less stake for : {coin}')
-                return True
+                if prev_percentage < 0 or inverse_trades > 2:
+                    print(f'{coin} prev_percentage less 0 or current long term has soon more than 2 reversals')
+                    return 1
+            
+                if trade_df_long.iloc[-1]['prev_percentage'] > 0:
+                    print(f'{coin} Previous long term was greater than 0, so this could not hold')
+                    return 1 #less stake
+                if trade_df_short.iloc[-1] > ema:
+                    print(f'{coin} entry greater than ema risk to short')
+                    return 1
+                
+                return 2
         else:
-            return False
+            return 0
 
     else:
         return False
