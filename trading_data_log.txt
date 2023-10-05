@@ -379,3 +379,5 @@ OSError: [WinError 121] The semaphore timeout period has expired
 2023-10-04 23:48:23,613 - INFO - Data fetched successfully
 2023-10-05 00:01:17,221 - INFO - Data fetched successfully
 2023-10-05 00:46:39,627 - INFO - Data fetched successfully
+2023-10-05 04:27:20,117 - INFO - Data fetched successfully
+2023-10-05 04:29:18,272 - INFO - Data fetched successfully

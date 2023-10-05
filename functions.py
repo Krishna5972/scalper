@@ -107,14 +107,12 @@ def notifier(message, tries=5, base_sleep=1):
 
 def create_futures_api_uri_v2(self, path: str) -> str:
         url = self.FUTURES_URL
-        print('Updated to v2')
         if self.testnet:
             url = self.FUTURES_TESTNET_URL
         return url + '/' + 'v2' + '/' + path
 
 
 def create_futures_api_uri_v1(self, path: str) -> str:
-        print('using v1')
         url = self.FUTURES_URL
         if self.testnet:
             url = self.FUTURES_TESTNET_URL
@@ -1551,6 +1549,11 @@ def is_short_tradable(coin,timeframe):
     
 
 def get_most_volatile_coin_d(shared_coin):
+    current_hour = datetime.utcnow().hour
+    if current_hour == 0:
+        time.sleep(600)
+    print('Fetching volatile data')
     data = get_scaner_data(sleep_time=3600)
     shared_coin.value = get_coins(data , daily_coin = 1)
+    print('Sleeping for 5m')
     time.sleep(300)

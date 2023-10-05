@@ -170,16 +170,15 @@ async def main(shared_coin,current_trade):
             super_df = pivot_super_df
 
             #super_df=supertrend_njit(coin, df_copy, period, atr1)
-            ema = get_ema(super_df,'ema_81')
+            #ema = get_ema(super_df,'ema_81')
             
-            print(f'Length of super_df : {super_df.shape[0]}')
             df_copy = df.copy()
             signal = get_signal(super_df)
             #super_df.to_csv('super_df.csv',index=False,mode='w+')
             current_signal_short = signal
             prev_signal_short = get_prev_signal(super_df)
 
-            trade_df = create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
+            #trade_df = create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
             
             pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2.6, pivot_period = 2)
