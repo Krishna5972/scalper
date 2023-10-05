@@ -57,7 +57,7 @@ async def main(shared_coin,current_trade):
 
     is_usdt_exist=1
     is_busd_exist=1
-    
+
 
     while(True):
         try:
@@ -308,8 +308,8 @@ async def main(shared_coin,current_trade):
 
                 max_usdt_leverage,max_busd_leverage = get_max_leverage(coin, config.api_key, config.secret_key)
 
-                usdt_leverage = min(usdt_leverage, max_usdt_leverage)
-                busd_leverage = min(busd_leverage, max_busd_leverage)
+                usdt_leverage = max(usdt_leverage, max_usdt_leverage)
+                busd_leverage = max(busd_leverage, max_busd_leverage)
 
                 exchange_info = client.futures_exchange_info()
 
