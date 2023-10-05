@@ -20,7 +20,7 @@ class TradeConfiguration:
         return risk   
     
 class PivotSuperTrendConfiguration():
-    def __init__(self,period = 1, atr_multiplier = 1, pivot_period = 1):
+    def __init__(self,period = 2, atr_multiplier = 2.6, pivot_period = 2):
         self.period = period
         self.atr_multiplier = atr_multiplier
         self.pivot_period = pivot_period

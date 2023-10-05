@@ -1069,7 +1069,7 @@ from binance.client import Client
 logging.basicConfig(filename='trading_data_log.txt',  filemode='a',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-def get_coins(data):
+def get_coins(data , daily_coin = 0):
     coins = []
     daily_volatilites = []
     monthly_volatilites = []
@@ -1101,6 +1101,8 @@ def get_coins(data):
     short_df = df_vol.sort_values(by='low_perc',ascending = True)
     volatility_df = df_vol.sort_values(by='volatility_d',ascending = False)
     
+    if daily_coin == 1:
+        return volatility_df.iloc[0]['coin']
     long_df = long_df[long_df['max_perc'] > 0.0321]
     short_df = short_df[short_df['low_perc'] < -0.0321]
     volatility_df = volatility_df[volatility_df['volatility_d']>6]
@@ -1110,6 +1112,7 @@ def get_coins(data):
     possible_volatile = list(volatility_df['coin'])
     
     
+
     return possible_long,possible_short,possible_volatile
 
 
@@ -1172,6 +1175,8 @@ def get_scaner_data(sleep_time=3600):
                 logging.error(f"Error {response.status_code}: {response.text}")
         except requests.RequestException as e:
             logging.error(f"Request failed: {e}")
+
+
 def select_coin(data):
     coins = []
     daily_volatilites = []
@@ -1308,9 +1313,12 @@ def is_long_tradable(coin,timeframe):
     if current_signal_long == 'Buy' and current_signal_short == 'Sell':
         if current_signal_short != prev_signal_short:
             long_trend_openTime = pd.to_datetime(trade_df_long.iloc[-1]['TradeOpenTime'])
-            inverse_trades = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].shape[0]
+
+            inverse_df_check = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime]
+            inverse_trades = inverse_df_check[inverse_df_check['signal']=='Sell'].shape[0]
             
-            ema_series = talib.EMA(super_df['close'], 200)
+            
+            ema_series = talib.EMA(super_df['close'], 100)
             ema = ema_series.iloc[-1]
 
             upperband = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].iloc[-1]['upperband']
@@ -1320,17 +1328,18 @@ def is_long_tradable(coin,timeframe):
             tp = (upperband - entry)
             sl = (entry - lowerband)
             ratio = tp/sl
-            if  ratio < 0.06:
+            if  ratio < 0.6:
                 return 0
             else:
                 prev_percentage = trade_df_short.iloc[-1]['prev_percentage']
-                if prev_percentage < 0 or inverse_trades > 2:
+                prev_long_percentage = trade_df_long.iloc[-1]['prev_percentage']
+                if prev_percentage < 0 or inverse_trades > 2 or prev_long_percentage > 0:
                     print(f'{coin} prev_percentage less 0 or current long term has soon more than 2 reversals')
                     return 1 #less stake
                 if trade_df_long.iloc[-1]['prev_percentage'] > 0:
                     print(f'{coin} Previous long term was greater than 0, so this could not hold')
                     return 1 #less stake
-                if trade_df_short.iloc[-1] < ema:
+                if trade_df_short.iloc[-1]['entry'] < ema:
                     print(f'{coin} entry less than ema')
                     return 1
 
@@ -1370,7 +1379,7 @@ def is_volatile_tradable(coin,timeframe):
     else:
         df=dataextract(coin,str_date,end_str,timeframe,client)
 
-    df.to_csv(f'data/{coin}/{coin}_{timeframe}.csv',mode='w+',index=False)
+    #df.to_csv(f'data/{coin}/{coin}_{timeframe}.csv',mode='w+',index=False)
 
     df= df.iloc[:-1]
 
@@ -1407,19 +1416,22 @@ def is_volatile_tradable(coin,timeframe):
             inverse_trades = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].shape[0]
             
 
-            upperband = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].iloc[-1]['upperband']
-            lowerband = pivot_super_df.iloc[-1]['lowerband']
+            
             entry = trade_df_short[trade_df_short['TradeOpenTime'] > long_trend_openTime].iloc[-1]['entry']
 
             if current_signal_long == 'Buy':
+                upperband = trade_df_short.iloc[-1]['upperband']
+                lowerband = pivot_super_df.iloc[-1]['lowerband']
                 tp = (upperband - entry)
                 sl = (entry - lowerband)
             else:
-                sl = (upperband - entry)
+                upperband = pivot_super_df.iloc[-1]['upperband']
+                lowerband = trade_df_short.iloc[-1]['lowerband']
                 tp = (entry - lowerband)
+                sl = (upperband - entry)
 
             ratio = tp/sl
-            if  ratio < 0.06:
+            if  ratio < 0.6:
                 return 0,current_signal_long
             else:
                 prev_percentage = trade_df_short.iloc[-1]['prev_percentage']
@@ -1465,7 +1477,7 @@ def is_short_tradable(coin,timeframe):
     else:
         df=dataextract(coin,str_date,end_str,timeframe,client)
 
-    df.to_csv(f'data/{coin}/{coin}_{timeframe}.csv',mode='w+',index=False)
+    #df.to_csv(f'data/{coin}/{coin}_{timeframe}.csv',mode='w+',index=False)
 
     df= df.iloc[:-1]
 
@@ -1514,18 +1526,19 @@ def is_short_tradable(coin,timeframe):
             ema_series = talib.EMA(super_df['close'], 200)
             ema = ema_series.iloc[-1]
 
-            if  ratio < 0.06:
+            if  ratio < 0.6:
                 return 0
             else:
                 prev_percentage = trade_df_short.iloc[-1]['prev_percentage']
-                if prev_percentage < 0 or inverse_trades > 2:
+                prev_long_percentage = trade_df_long.iloc[-1]['prev_percentage']
+                if prev_percentage < 0 or inverse_trades > 2 or prev_long_percentage > 0:
                     print(f'{coin} prev_percentage less 0 or current long term has soon more than 2 reversals')
                     return 1
             
                 if trade_df_long.iloc[-1]['prev_percentage'] > 0:
                     print(f'{coin} Previous long term was greater than 0, so this could not hold')
                     return 1 #less stake
-                if trade_df_short.iloc[-1] > ema:
+                if trade_df_short.iloc[-1]['entry'] > ema:
                     print(f'{coin} entry greater than ema risk to short')
                     return 1
                 
@@ -1535,3 +1548,9 @@ def is_short_tradable(coin,timeframe):
 
     else:
         return False
+    
+
+def get_most_volatile_coin_d(shared_coin):
+    data = get_scaner_data(sleep_time=3600)
+    shared_coin.value = get_coins(data , daily_coin = 1)
+    time.sleep(300)

@@ -1,15 +1,10 @@
-import threading
 import logging
 import pandas as pd
 import time
-from binance.client import Client
-import json
-import requests
 from datetime import datetime
 logging.basicConfig(filename='trading_data_log.txt',  filemode='a',level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 from datetime import datetime,timedelta
 from data_extraction import *
-import config
 from multiprocessing import Process, Manager
 
 from functions import *
@@ -172,6 +167,7 @@ if __name__ == "__main__":
 
                 final_list = list(final_list)
             
+                print(final_list)
 
                 break
 
