@@ -243,3 +243,147 @@ task: <Task pending name='Task-5' coro=<WebSocketCommonProtocol.close_connection
 2023-09-26 04:43:15,043 - INFO - Data fetched successfully
 2023-09-26 04:47:04,133 - INFO - Data fetched successfully
 2023-09-26 05:17:47,590 - INFO - Data fetched successfully
+2023-09-26 05:31:38,286 - INFO - Data fetched successfully
+2023-09-26 05:37:50,056 - INFO - Data fetched successfully
+2023-09-26 05:48:44,456 - INFO - Data fetched successfully
+2023-09-26 06:06:01,797 - INFO - Data fetched successfully
+2023-09-26 06:26:57,555 - INFO - Data fetched successfully
+2023-09-26 06:31:03,994 - INFO - Data fetched successfully
+2023-09-26 07:05:58,321 - ERROR - data transfer failed
+Traceback (most recent call last):
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 945, in transfer_data
+    message = await self.read_message()
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1015, in read_message
+    frame = await self.read_data_frame(max_size=self.max_size)
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1090, in read_data_frame
+    frame = await self.read_frame(max_size)
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1145, in read_frame
+    frame = await Frame.read(
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\framing.py", line 70, in read
+    data = await reader(2)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\streams.py", line 723, in readexactly
+    await self._wait_for_data('readexactly')
+  File "C:\ProgramData\Anaconda3\lib\asyncio\streams.py", line 517, in _wait_for_data
+    await self._waiter
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 280, in _loop_reading
+    data = fut.result()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 817, in _poll
+    value = callback(transferred, key, ov)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 462, in finish_recv
+    return ov.getresult()
+OSError: [WinError 121] The semaphore timeout period has expired
+2023-09-26 08:04:03,558 - INFO - Data fetched successfully
+2023-09-26 09:37:25,595 - INFO - Data fetched successfully
+2023-09-26 11:10:18,300 - INFO - Data fetched successfully
+2023-09-26 23:39:37,614 - ERROR - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x000001AFFCE30070>
+transport: <_ProactorSocketTransport fd=2104 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\ProgramData\Anaconda3\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 359, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 395, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'
+2023-09-26 23:39:37,632 - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-5' coro=<WebSocketCommonProtocol.close_connection() running at C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py:1299> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x000001AFFCDE6CD0>()]> cb=[_gather.<locals>._done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:767, shield.<locals>._inner_done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:890]>
+2023-09-27 00:02:19,701 - INFO - Data fetched successfully
+2023-09-27 00:18:54,397 - ERROR - data transfer failed
+Traceback (most recent call last):
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 945, in transfer_data
+    message = await self.read_message()
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1015, in read_message
+    frame = await self.read_data_frame(max_size=self.max_size)
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1090, in read_data_frame
+    frame = await self.read_frame(max_size)
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1145, in read_frame
+    frame = await Frame.read(
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\framing.py", line 70, in read
+    data = await reader(2)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\streams.py", line 723, in readexactly
+    await self._wait_for_data('readexactly')
+  File "C:\ProgramData\Anaconda3\lib\asyncio\streams.py", line 517, in _wait_for_data
+    await self._waiter
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 280, in _loop_reading
+    data = fut.result()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 817, in _poll
+    value = callback(transferred, key, ov)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 462, in finish_recv
+    return ov.getresult()
+OSError: [WinError 121] The semaphore timeout period has expired
+2023-09-27 07:08:06,119 - ERROR - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x00000295C38FC040>
+transport: <_ProactorSocketTransport fd=2104 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\ProgramData\Anaconda3\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 359, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 395, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'
+2023-09-27 07:08:06,132 - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-5' coro=<WebSocketCommonProtocol.close_connection() running at C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py:1299> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x00000295C38A05B0>()]> cb=[_gather.<locals>._done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:767, shield.<locals>._inner_done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:890]>
+2023-09-29 04:28:18,208 - ERROR - data transfer failed
+Traceback (most recent call last):
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 945, in transfer_data
+    message = await self.read_message()
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1015, in read_message
+    frame = await self.read_data_frame(max_size=self.max_size)
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1090, in read_data_frame
+    frame = await self.read_frame(max_size)
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1145, in read_frame
+    frame = await Frame.read(
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\framing.py", line 70, in read
+    data = await reader(2)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\streams.py", line 723, in readexactly
+    await self._wait_for_data('readexactly')
+  File "C:\ProgramData\Anaconda3\lib\asyncio\streams.py", line 517, in _wait_for_data
+    await self._waiter
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 280, in _loop_reading
+    data = fut.result()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 817, in _poll
+    value = callback(transferred, key, ov)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 462, in finish_recv
+    return ov.getresult()
+OSError: [WinError 121] The semaphore timeout period has expired
+2023-10-03 08:45:20,382 - ERROR - data transfer failed
+Traceback (most recent call last):
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 945, in transfer_data
+    message = await self.read_message()
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1015, in read_message
+    frame = await self.read_data_frame(max_size=self.max_size)
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1090, in read_data_frame
+    frame = await self.read_frame(max_size)
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py", line 1145, in read_frame
+    frame = await Frame.read(
+  File "C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\framing.py", line 70, in read
+    data = await reader(2)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\streams.py", line 723, in readexactly
+    await self._wait_for_data('readexactly')
+  File "C:\ProgramData\Anaconda3\lib\asyncio\streams.py", line 517, in _wait_for_data
+    await self._waiter
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 280, in _loop_reading
+    data = fut.result()
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 817, in _poll
+    value = callback(transferred, key, ov)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\windows_events.py", line 462, in finish_recv
+    return ov.getresult()
+OSError: [WinError 121] The semaphore timeout period has expired
+2023-10-04 23:32:58,393 - INFO - Data fetched successfully
+2023-10-04 23:37:47,744 - INFO - Data fetched successfully
+2023-10-04 23:40:45,799 - INFO - Data fetched successfully
+2023-10-04 23:42:49,951 - INFO - Data fetched successfully
+2023-10-04 23:45:29,403 - INFO - Data fetched successfully
+2023-10-04 23:48:23,613 - INFO - Data fetched successfully
+2023-10-05 00:01:17,221 - INFO - Data fetched successfully
+2023-10-05 00:46:39,627 - INFO - Data fetched successfully
+2023-10-05 04:27:20,117 - INFO - Data fetched successfully
+2023-10-05 04:29:18,272 - INFO - Data fetched successfully
+2023-10-05 04:33:23,478 - INFO - Data fetched successfully
+2023-10-05 04:34:45,735 - INFO - Data fetched successfully
+2023-10-05 04:34:49,391 - INFO - Data fetched successfully
+2023-10-05 04:34:53,053 - INFO - Data fetched successfully
+2023-10-05 04:34:56,881 - INFO - Data fetched successfully
+2023-10-05 04:35:00,562 - INFO - Data fetched successfully

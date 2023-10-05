@@ -110,8 +110,7 @@ async def main(shared_coin,current_trade):
 
     df=dataextract(coin,str_date,end_str,timeframe,client)
 
-    df= df.tail(330).reset_index(drop=True)
-
+    df = df.tail(300).reset_index(drop=True)
 
     x_str = str(df['close'].iloc[-1])
     decimal_index = x_str.find('.')
@@ -151,6 +150,7 @@ async def main(shared_coin,current_trade):
     async def on_message(message,df,current_trade):
         data = json.loads(message)
         coin = current_trade.get_current_coin()
+        use_sl = current_trade.use_sl
         #now = datetime.utcnow()
         # if now.hour == 23 and now.minute == 59:
         #     close_any_open_positions(coin,client)
@@ -160,52 +160,28 @@ async def main(shared_coin,current_trade):
             notifier(f'Candle closed : {timeframe} , coin : {coin}')
             df = get_latest_df(data, df)
             df_copy = df.copy()
-
-            pivot_st = PivotSuperTrendConfiguration(period = 1, atr_multiplier = 1, pivot_period = 1)
-            pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
-            pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
-            current_pivot_signal = pivot_signal
-            prev_pivot_signal = get_prev_pivot_supertrend_signal(pivot_super_df)
-
-            super_df = pivot_super_df
-
-            #super_df=supertrend_njit(coin, df_copy, period, atr1)
-            #ema = get_ema(super_df,'ema_81')
             
-            df_copy = df.copy()
-            signal = get_signal(super_df)
-            #super_df.to_csv('super_df.csv',index=False,mode='w+')
-            current_signal_short = signal
-            prev_signal_short = get_prev_signal(super_df)
-
-            #trade_df = create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
-
             
-            pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2.6, pivot_period = 2)
+            pivot_st = PivotSuperTrendConfiguration()
             pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
-            pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
-            current_pivot_signal = pivot_signal
+            current_pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
             prev_pivot_signal = get_prev_pivot_supertrend_signal(pivot_super_df)
-
+            pivot_super_df.to_csv('super_df.csv')
             super_df = pivot_super_df
-
-            signal_long = get_signal(super_df)
-            current_signal_long = signal_long
-            prev_signal_long = get_prev_signal(super_df)
+            print(f'Length of super_df : {super_df.shape[0]}')
 
             str_date = (datetime.now()- timedelta(days=3)).strftime('%b %d,%Y')
             df_15m=dataextract(coin,str_date,end_str,'15m',client)
 
-            df_15m = df_15m.tail(330).reset_index(drop=True)
-
+            
             pivot_super_df_15m = supertrend_pivot(coin, df_15m, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
             long_signal_15m = get_pivot_supertrend_signal(pivot_super_df_15m)
 
             long_signal_15m_prev = get_prev_signal(pivot_super_df_15m)
 
-
-            
-            if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long) or (long_signal_15m != long_signal_15m_prev): 
+            print(f'current_pivot_signal : {current_pivot_signal} , prev_pivot_signal : {prev_pivot_signal}')
+            print(f'long_signal_15m : {long_signal_15m} , long_signal_15m_prev : {long_signal_15m_prev}  ')
+            if (current_pivot_signal != prev_pivot_signal): 
                 
                 close_any_open_positions(coin,client)
                 cancel_all_open_orders(coin,client)
@@ -214,15 +190,15 @@ async def main(shared_coin,current_trade):
                 #over_all_trend = get_over_all_trend(coin)
                 lowerband = get_lowerband(super_df)
                 upperband = get_upperband(super_df)
+
                 
                 #stake = get_stake(super_df,client,risk)
                 
                 quantity = round(stake/entry, current_trade.round_quantity)
                 partial_profit_take = round(quantity/2,current_trade.round_quantity) 
+                change = None
                 
-
-
-          
+                
                 
                 order = Order(coin = coin,
                             entry = entry,
@@ -233,27 +209,34 @@ async def main(shared_coin,current_trade):
                             lowerband = lowerband,
                             upperband = upperband
                             )
-                       
-               
+                
 
-                if current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Buy':
+                
+
+                if long_signal_15m_prev != long_signal_15m:
+                    if long_signal_15m == 'Buy':
+                        order.make_buy_trade(client)
+                        notifier(f'15m Changed to Buy so Bought')
+                    else:
+                        order.make_sell_trade(client)
+                        notifier(f'15m Changed to Sell so Sold')
+
+
+
+
+
+
+
+                if long_signal_15m == 'Buy' and current_pivot_signal == 'Buy':       
                     order.make_buy_trade(client) 
-                    notifier(f'ShortTerm : Sell , LongTerm : Buy , Long15m : Buy => Bought')
-              
+                    notifier(f'15m : Buy , 5m : Buy => Bought')  
 
-                elif current_signal_short == 'Buy' and current_signal_long == 'Sell' and long_signal_15m =='Sell':
-                    order.quantity =  round(order.quantity/2, round_quantity)
-                    order.partial_profit_take = round(order.partial_profit_take/2, round_quantity) 
+                elif long_signal_15m == 'Sell' and current_pivot_signal == 'Sell':
                     order.make_sell_trade(client)
-                    notifier(f'ShortTerm : Buy , LongTerm : Sell  , Long15m : Sell => Sold')
-
-                    
-                # elif pivot_signal == 'Sell' and signal == 'Buy':
-                #     order.quantity = round(order.quantity/2, current_trade.round_quantity)
-                #     order.partial_profit_take = round(order.quantity/2,current_trade.round_quantity)
-                #     order.make_buy_trade(client)     
+                    notifier(f'15m : Sell , 5m : Sell => Sold')
+                
                 else:
-                    notifier(f'Waiting Patiently to strike.....')      
+                    notifier(f'Waiting on {coin}')      
             
             
                
@@ -296,8 +279,6 @@ async def main(shared_coin,current_trade):
                 end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
 
                 df=dataextract(coin,str_date,end_str,timeframe,client)
-
-                df = df.tail(330).reset_index(drop=True)
                 x_str = str(df['close'].iloc[-1])
                 decimal_index = x_str.find('.')
                 round_price = len(x_str) - decimal_index - 1
@@ -362,12 +343,10 @@ async def main(shared_coin,current_trade):
 
                 if signal == "Buy":
                     order.make_buy_trade(client)  
-                    notifier(f'Made a buy trade for {coin} looking for BIG Profit')
+                    notifier(f'Made a buy trade when for {coin}')
                 else:
-                    order.quantity =  round(order.quantity/2, round_quantity)
-                    order.partial_profit_take = round(order.partial_profit_take/2, round_quantity) 
                     order.make_sell_trade(client)
-                    notifier(f'Made a sell trade for {coin} for BIG Profit')
+                    notifier(f'Made a sell trade when for {coin}')
 
         TIMEOUT_SECONDS = 60
 
@@ -402,11 +381,20 @@ async def main(shared_coin,current_trade):
     while True:
         try:
             #notifier(f'Old coin : {coin}')
+            
             df = await listen(df,current_trade)
         except Exception as e:
             print(f"Error: {e}. Retrying in 10 seconds...")
             notifier(f"Error: {e}. Retrying in 10 seconds...")
             await asyncio.sleep(10)
+
+            str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
+            end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
+
+            print(timeframe)
+            df=dataextract(coin,str_date,end_str,timeframe,client)
+
+            df = df.tail(300).reset_index(drop=True)
 
 
 
@@ -420,11 +408,12 @@ def run_async_main(shared_coin,current_trade):
 def main_execution():
     coin = input("Please enter the coin name: ")
     coin = coin.upper()
-    stake = 1116
-    check_for_volatilte_coin = 1
+    stake = float(input("Enter the stake :"))
+    check_for_volatilte_coin = 0
 
-    timeframe = '5m'
-    print(f"Your timeframe of {timeframe} has been confirmed.")
+    timeframe = '1m'
+    print(f"Running on {timeframe}.")
+
 
     current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin,use_sl = 0)
     manager = Manager()
@@ -435,13 +424,13 @@ def main_execution():
 
     
 
-    p1 = Process(target=get_most_volatile_coin_d, args=(shared_coin,))
+    #p1 = Process(target=get_coin, args=(shared_coin,))
     p2 = Process(target=run_async_main, args=(shared_coin,current_trade))
 
 
-    p1.start()
+    #p1.start()
     p2.start()
-    p1.join()
+   # p1.join()
     p2.join()
 
 if __name__ == "__main__":
