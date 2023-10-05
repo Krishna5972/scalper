@@ -1549,11 +1549,20 @@ def is_short_tradable(coin,timeframe):
     
 
 def get_most_volatile_coin_d(shared_coin):
-    current_hour = datetime.utcnow().hour
-    if current_hour == 0:
-        time.sleep(600)
-    print('Fetching volatile data')
-    data = get_scaner_data(sleep_time=3600)
-    shared_coin.value = get_coins(data , daily_coin = 1)
-    print('Sleeping for 5m')
-    time.sleep(300)
+    while True:
+        current_time = datetime.utcnow()
+        current_hour = current_time.hour
+        if current_hour == 0:
+            current_minute = current_time.minute
+            if current_minute < 30:
+                time.sleep(600)
+        print('Fetching volatile data')
+        data = get_scaner_data(sleep_time=3600)
+        shared_coin.value = get_coins(data , daily_coin = 1)
+        print('Sleeping for 5m')
+        if current_hour >= 0 and current_hour < 6:
+            time.sleep(300)
+        elif current_hour >=6 and current_hour < 12:
+            time.sleep(600)
+        elif current_hour >= 12:
+            time.sleep(900)
