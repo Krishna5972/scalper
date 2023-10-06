@@ -58,35 +58,9 @@ async def main(shared_coin,current_trade):
     is_usdt_exist=1
     is_busd_exist=1
 
+    
 
-    while(True):
-        try:
-            client=Client(config.api_key,config.secret_key)
-            try:
-                client.futures_change_leverage(symbol=f'{coin}USDT', leverage=usdt_leverage)
-            except Exception as e:
-                try:
-                    client.futures_change_leverage(symbol=f'{coin}USDT', leverage=max_usdt_leverage)
-                    notifier(f"Had to make a leverage change from {usdt_leverage} to {max_usdt_leverage}")
-                except Exception as e:
-                    notifier(f'{coin}USDT Symbol does not Exist')
-                    is_usdt_exist=0
-            try:
-                client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=busd_leverage)
-            except Exception as e:
-                try:
-                    client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=max_busd_leverage)
-                
-                    notifier(f"Had to make a leverage change from {busd_leverage} to {max_busd_leverage}")
-                except Exception as e:
-                    notifier(f'{coin}BUSD Symbol does not Exist')
-                    is_busd_exist=0
-                
-            notifier(f'SARAVANA BHAVA')
-            break
-        except Exception as e:
-            notifier(f'Met with exception {e}, sleeping for 5 minutes and trying again')
-            time.sleep(300)
+    change_leverage(coin,max_usdt_leverage,max_busd_leverage)
 
 
     client._create_futures_api_uri = create_futures_api_uri_v2.__get__(client, Client)
@@ -402,6 +376,10 @@ async def main(shared_coin,current_trade):
     while True:
         try:
             #notifier(f'Old coin : {coin}')
+            str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
+            end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
+            df=dataextract(coin,str_date,end_str,timeframe,client)
+            df= df.tail(330).reset_index(drop=True)
             df = await listen(df,current_trade)
         except Exception as e:
             print(f"Error: {e}. Retrying in 10 seconds...")
