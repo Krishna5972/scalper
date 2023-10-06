@@ -42,7 +42,6 @@ async def main(shared_coin,current_trade):
     coin = current_trade.get_current_coin()
     stake = current_trade.stake
     timeframe = current_trade.timeframe
-    use_sl = current_trade.use_sl
 
     print(f"You entered: {coin}")
 
@@ -62,18 +61,6 @@ async def main(shared_coin,current_trade):
 
     change_leverage(coin,max_usdt_leverage,max_busd_leverage)
 
-
-    client._create_futures_api_uri = create_futures_api_uri_v2.__get__(client, Client)
-    in_trade_usdt,in_trade_busd = 0,0
-    if is_usdt_exist==1:
-        pos=client.futures_position_information(symbol=f'{coin}USDT')
-        if float(pos[0]['positionAmt']) !=0 or float(pos[1]['positionAmt']) !=0:
-            in_trade_usdt=1
-
-    if is_busd_exist == 1:
-        pos=client.futures_position_information(symbol=f'{coin}BUSD')
-        if float(pos[0]['positionAmt']) !=0 or float(pos[1]['positionAmt']) !=0:
-            in_trade_busd=1
     client._create_futures_api_uri = create_futures_api_uri_v1.__get__(client, Client)
 
 
@@ -398,7 +385,7 @@ def run_async_main(shared_coin,current_trade):
 def main_execution():
     coin = input("Please enter the coin name: ")
     coin = coin.upper()
-    stake = 1116
+    stake = 300
     check_for_volatilte_coin = 1
 
     timeframe = '5m'
