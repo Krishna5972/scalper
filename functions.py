@@ -1563,11 +1563,10 @@ def get_most_volatile_coin_d(shared_coin):
         print('Sleeping for a random time')
 
         if 0 <= current_hour < 6:
-            sleep_for_random_time(min_time=300, max_time=350)
-        elif 6 <= current_hour < 12:
-            sleep_for_random_time(min_time=600, max_time=660)
-        elif current_hour >= 12:
-            sleep_for_random_time(min_time=900, max_time=1800)
+            sleep_for_random_time(min_time=300, max_time=300)
+        else:
+            sleep_for_random_time(min_time=300, max_time=600)
+        
 
 def sleep_for_random_time(min_time, max_time):
     sleep_time = randint(min_time, max_time)
