@@ -141,7 +141,7 @@ class Order:
             price=rounded_price,
             quantity=self.quantity,
             timeInForce='GTC',
-            positionSide='LONG',
+            positionSide='SHORT',
             dualSidePosition=True
         )
         
