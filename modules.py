@@ -80,6 +80,19 @@ class Order:
                                 )
         #notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
         #notifier(f'Buy order placed for coin :{self.coin}, TP : {self.take_profit}')
+
+        price = self.entry - (self.entry * 0.0114)
+        rounded_price = round(price, self.round_price)
+        client.futures_create_order(
+            symbol=f'{self.coin}USDT',
+            side='BUY',
+            type='LIMIT',
+            price=rounded_price,
+            quantity=self.quantity,
+            timeInForce='GTC',
+            positionSide='LONG',
+            dualSidePosition=True
+        )
         
     def make_sell_trade(self,client):
         
@@ -117,6 +130,20 @@ class Order:
         
         #notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
         #notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
+
+
+        price = self.entry + (self.entry * 0.0114)
+        rounded_price = round(price, self.round_price)
+        client.futures_create_order(
+            symbol=f'{self.coin}USDT',
+            side='SELL',
+            type='LIMIT',
+            price=rounded_price,
+            quantity=self.quantity,
+            timeInForce='GTC',
+            positionSide='LONG',
+            dualSidePosition=True
+        )
         
     def make_inverse_buy_trade(self,client):
         client.futures_create_order(symbol=f'{self.coin}USDT', side='BUY', type='MARKET', quantity=self.quantity, dualSidePosition=True, positionSide='LONG')

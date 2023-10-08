@@ -385,7 +385,7 @@ def run_async_main(shared_coin,current_trade):
 def main_execution():
     coin = input("Please enter the coin name: ")
     coin = coin.upper()
-    stake = 300
+    stake = 600
     check_for_volatilte_coin = 1
 
     timeframe = '5m'
