@@ -322,12 +322,12 @@ async def main(shared_coin,current_trade):
                 notifier(f'round price : {order.round_price}')
 
                 if signal == "Buy":
-                    order.make_buy_trade(client)  
+                    order.make_buy_trade(client,big_profit = 1)  
                     notifier(f'Made a buy trade for {coin} looking for BIG Profit')
                 else:
                     order.quantity =  round(order.quantity/2, round_quantity)
                     order.partial_profit_take = round(order.partial_profit_take/2, round_quantity) 
-                    order.make_sell_trade(client)
+                    order.make_sell_trade(client,big_profit =1)
                     notifier(f'Made a sell trade for {coin} for BIG Profit')
 
         TIMEOUT_SECONDS = 60
