@@ -1555,7 +1555,7 @@ def get_most_volatile_coin_d(shared_coin):
         current_hour = current_time.hour
 
         if current_hour == 0 and current_time.minute < 30:
-            sleep_for_random_time(min_time=600, max_time=660)
+            sleep_for_random_time(min_time=300, max_time=350)
 
         print('Fetching volatile data')
         data = get_scaner_data(sleep_time=3600)
@@ -1563,9 +1563,9 @@ def get_most_volatile_coin_d(shared_coin):
         print('Sleeping for a random time')
 
         if 0 <= current_hour < 6:
-            sleep_for_random_time(min_time=300, max_time=300)
+            sleep_for_random_time(min_time=300, max_time=360)
         else:
-            sleep_for_random_time(min_time=300, max_time=600)
+            sleep_for_random_time(min_time=300, max_time=660)
         
 
 def sleep_for_random_time(min_time, max_time):
