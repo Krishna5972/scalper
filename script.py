@@ -118,7 +118,7 @@ async def main(shared_coin,current_trade):
         #     cancel_all_open_orders(coin,client)
 
         if data['k']['x'] == True:
-            notifier(f'Candle closed : {timeframe} , coin : {coin}')
+            
             df = get_latest_df(data, df)
             df_copy = df.copy()
 
@@ -129,6 +129,9 @@ async def main(shared_coin,current_trade):
             prev_pivot_signal = get_prev_pivot_supertrend_signal(pivot_super_df)
 
             super_df = pivot_super_df
+
+            upperband_1 = pivot_super_df.iloc[-1]['upperband']
+            lowerband_1 = pivot_super_df.iloc[-1]['lowerband']
 
             #super_df=supertrend_njit(coin, df_copy, period, atr1)
             #ema = get_ema(super_df,'ema_81')
@@ -164,7 +167,19 @@ async def main(shared_coin,current_trade):
 
             long_signal_15m_prev = get_prev_signal(pivot_super_df_15m)
 
+            
 
+            upperband_2_6 = pivot_super_df.iloc[-1]['upperband']
+            lowerband_2_6= pivot_super_df.iloc[-1]['lowerband']
+
+            upperband_15m = pivot_super_df_15m.iloc[-1]['upperband']
+            lowerband_15m = pivot_super_df_15m.iloc[-1]['lowerband']
+
+
+            notifier(f"""Candle closed : {timeframe} , coin : {coin}
+                      1 [upperband : {upperband_1} , lowerband : {lowerband_1}] 
+                      2.6 [upperband : {upperband_2_6} , lowerband : {lowerband_2_6}] 
+                      15m : [upperband : {upperband_15m} , lowerband : {lowerband_15m}]""")
             
             if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long) or (long_signal_15m != long_signal_15m_prev): 
                 
@@ -282,7 +297,7 @@ async def main(shared_coin,current_trade):
 
                 current_trade.round_quantity = round_quantity
                 
-                pivot_st = PivotSuperTrendConfiguration()
+                pivot_st = PivotSuperTrendConfiguration(period = 1, atr_multiplier = 1, pivot_period = 1)
 
                 super_df=supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
                 df_copy = df.copy()
@@ -298,10 +313,6 @@ async def main(shared_coin,current_trade):
                 lowerband = get_lowerband(super_df)
                 upperband = get_upperband(super_df)
 
-                ema = get_ema(super_df,'ema_81')
-                
-                tradeConfig = TradeConfiguration()
-                risk = tradeConfig.get_risk(over_all_trend,signal)
                 
                 #stake = get_stake(super_df,client,risk)
                 
