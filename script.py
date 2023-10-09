@@ -162,6 +162,9 @@ async def main(shared_coin,current_trade):
 
             df_15m = df_15m.tail(330).reset_index(drop=True)
 
+
+            df_15m = df_15m.iloc[:-1]
+
             pivot_super_df_15m = supertrend_pivot(coin, df_15m, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
             long_signal_15m = get_pivot_supertrend_signal(pivot_super_df_15m)
 
@@ -210,9 +213,15 @@ async def main(shared_coin,current_trade):
                             upperband = upperband
                             )
                        
-               
+                if long_signal_15m != long_signal_15m_prev:
+                    if long_signal_15m == "Buy":
+                        order.make_buy_trade(client)
+                        notifier(f'Long15m : Buy => Bought')
+                    elif long_signal_15m == "Sell":
+                        order.make_sell_trade(client)
+                        notifier(f'Long15m : Sell => Sold')
 
-                if current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Buy':
+                elif current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Buy':
                     order.make_buy_trade(client) 
                     notifier(f'ShortTerm : Sell , LongTerm : Buy , Long15m : Buy => Bought')
               
@@ -222,6 +231,8 @@ async def main(shared_coin,current_trade):
                     order.partial_profit_take = round(order.partial_profit_take/2, round_quantity) 
                     order.make_sell_trade(client)
                     notifier(f'ShortTerm : Buy , LongTerm : Sell  , Long15m : Sell => Sold')
+                
+
 
                     
                 # elif pivot_signal == 'Sell' and signal == 'Buy':
@@ -316,7 +327,7 @@ async def main(shared_coin,current_trade):
                 
                 #stake = get_stake(super_df,client,risk)
                 
-                quantity = round(stake/entry, round_quantity)
+                quantity = round((stake/2)/entry, round_quantity)
 
                 partial_profit_take = round(quantity/2,round_quantity)
 
