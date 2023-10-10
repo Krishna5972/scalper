@@ -389,6 +389,28 @@ async def main(shared_coin,current_trade):
             end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
             df=dataextract(coin,str_date,end_str,timeframe,client)
             df= df.tail(330).reset_index(drop=True)
+
+            x_str = str(df['close'].iloc[-1])
+            decimal_index = x_str.find('.')
+            round_price = len(x_str) - decimal_index - 1
+
+            current_trade.round_price = round_price
+
+            exchange_info = client.futures_exchange_info()
+
+            for symbol in exchange_info['symbols']:
+                if symbol['symbol'] == f"{coin}USDT":
+                    round_quantity = symbol['quantityPrecision']
+                    break
+            df_copy = df.copy()
+
+            try:
+                current_trade.round_quantity = round_quantity
+            except UnboundLocalError as e:
+                current_trade.round_quantity = 0
+                notifier('Could not find quantityPrecision')
+
+
             df = await listen(df,current_trade)
         except Exception as e:
             print(f"Error: {e}. Retrying in 10 seconds...")
