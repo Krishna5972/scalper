@@ -184,7 +184,7 @@ async def main(shared_coin,current_trade):
                       2.6 [upperband : {upperband_2_6} , lowerband : {lowerband_2_6}] 
                       15m : [upperband : {upperband_15m} , lowerband : {lowerband_15m}]""")
             
-            if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long) or (long_signal_15m != long_signal_15m_prev): 
+            if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long) or ((long_signal_15m != long_signal_15m_prev ) and (datetime.now().minute in [0,15,30,45])): 
                 
                 close_any_open_positions(coin,client)
                 cancel_all_open_orders(coin,client)
