@@ -145,6 +145,7 @@ if current_time.hour == 0:
     daily_PNL.to_csv('daily_pnl.csv',index = False)
     plot_day_over_day(daily_PNL)
     send_mail("daily_change.png")
-    time.sleep(82800)
+    time.sleep(3700)
 else:
-    time.sleep(300)
+    print(f'Sleeping for 20 minutes :{current_time}')
+    time.sleep(1200)
