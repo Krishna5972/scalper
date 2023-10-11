@@ -120,6 +120,8 @@ async def main(shared_coin,current_trade):
         if data['k']['x'] == True:
             
             df = get_latest_df(data, df)
+            if df.shape[0] < 40:
+                return df
             df_copy = df.copy()
 
             pivot_st = PivotSuperTrendConfiguration(period = 1, atr_multiplier = 1, pivot_period = 1)
