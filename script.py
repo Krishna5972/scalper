@@ -147,7 +147,7 @@ async def main(shared_coin,current_trade):
             #trade_df = create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
             
-            pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2.6, pivot_period = 2)
+            pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2.8, pivot_period = 2)
             pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
             pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
             current_pivot_signal = pivot_signal
