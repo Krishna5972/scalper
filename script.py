@@ -121,6 +121,7 @@ async def main(shared_coin,current_trade):
             
             df = get_latest_df(data, df)
             if df.shape[0] < 40:
+                notifier(f'{coin} has less than 40 candles not trading')
                 return df
             df_copy = df.copy()
 
@@ -182,9 +183,7 @@ async def main(shared_coin,current_trade):
 
 
             notifier(f"""Candle closed : {timeframe} , coin : {coin}
-                      1 [upperband : {upperband_1} , lowerband : {lowerband_1}] 
-                      2.6 [upperband : {upperband_2_6} , lowerband : {lowerband_2_6}] 
-                      15m : [upperband : {upperband_15m} , lowerband : {lowerband_15m}]""")
+                     long_signal_15m : {long_signal_15m} , long_signal_15m_prev : {long_signal_15m_prev}""")
             
             if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long) or ((long_signal_15m != long_signal_15m_prev ) and (datetime.now().minute in [0,15,30,45])): 
                 
@@ -299,6 +298,8 @@ async def main(shared_coin,current_trade):
 
                 usdt_leverage = max(usdt_leverage, max_usdt_leverage)
                 busd_leverage = max(busd_leverage, max_busd_leverage)
+
+                change_leverage(coin,max_usdt_leverage,max_busd_leverage)
 
                 exchange_info = client.futures_exchange_info()
 

@@ -140,7 +140,8 @@ while True:
         daily_PNL = pd.read_csv('daily_pnl.csv')
         income_history = client.futures_income_history(limit = 500)
         now = datetime.utcnow() - timedelta(days=1)
-        daily_PNL = daily_PNL.append({'Date': now.strftime('%d-%m-%Y'), 'PNL': get_pnl(income_history)}, ignore_index=True)
+        new_row = pd.DataFrame({'Date': [now.strftime('%d-%m-%Y')], 'PNL': [get_pnl(income_history)]})
+        daily_PNL = pd.concat([daily_PNL, new_row], ignore_index=True)
         daily_PNL['Percentage Change'] = (daily_PNL['PNL']/initial_capital) * 100
         daily_PNL.drop_duplicates(subset=['Date'],inplace=True)
         daily_PNL.to_csv('daily_pnl.csv',index = False)
