@@ -228,8 +228,6 @@ async def main(shared_coin,current_trade):
               
 
                 elif current_signal_short == 'Buy' and current_signal_long == 'Sell' and long_signal_15m =='Sell':
-                    order.quantity =  round(order.quantity/2, round_quantity)
-                    order.partial_profit_take = round(order.partial_profit_take/2, round_quantity) 
                     order.make_sell_trade(client)
                     notifier(f'ShortTerm : Buy , LongTerm : Sell  , Long15m : Sell => Sold')
                 
@@ -350,8 +348,6 @@ async def main(shared_coin,current_trade):
                     order.make_buy_trade(client,big_profit = 1)  
                     notifier(f'Made a buy trade for {coin} looking for BIG Profit')
                 else:
-                    order.quantity =  round(order.quantity/2, round_quantity)
-                    order.partial_profit_take = round(order.partial_profit_take/2, round_quantity) 
                     order.make_sell_trade(client,big_profit =1)
                     notifier(f'Made a sell trade for {coin} for BIG Profit')
 
