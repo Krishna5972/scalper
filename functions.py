@@ -1580,6 +1580,8 @@ def change_leverage(coin,max_usdt_leverage,max_busd_leverage):
             client.futures_change_leverage(symbol=f'{coin}USDT', leverage=max_usdt_leverage)
         except Exception as e:
             notifier(e)
+            client.futures_change_leverage(symbol=f'{coin}USDT', leverage=8)
+            notifier(f'Had to change leverage to 8')
         try:
             client.futures_change_leverage(symbol=f'{coin}BUSD', leverage=max_busd_leverage)
         except Exception as e:
