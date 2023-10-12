@@ -134,20 +134,15 @@ def send_mail(filename, subject='SARAVANA BHAVA'):
 initial_capital = 385
 client=Client(config.api_key,config.secret_key)
 
-while True:
-    current_time = datetime.utcnow()
-    if current_time.hour == 0:
-        daily_PNL = pd.read_csv('daily_pnl.csv')
-        income_history = client.futures_income_history(limit = 500)
-        now = datetime.utcnow() - timedelta(days=1)
-        new_row = pd.DataFrame({'Date': [now.strftime('%d-%m-%Y')], 'PNL': [get_pnl(income_history)]})
-        daily_PNL = pd.concat([daily_PNL, new_row], ignore_index=True)
-        daily_PNL['Percentage Change'] = (daily_PNL['PNL']/initial_capital) * 100
-        daily_PNL.drop_duplicates(subset=['Date'],inplace=True)
-        daily_PNL.to_csv('daily_pnl.csv',index = False)
-        plot_day_over_day(daily_PNL)
-        send_mail("daily_change.png")
-        time.sleep(3700)
-    else:
-        print(f'Sleeping for 20 minutes :{current_time}')
-        time.sleep(1200)
+daily_PNL = pd.read_csv('daily_pnl.csv')
+income_history = client.futures_income_history(limit = 500)
+now = datetime.utcnow() - timedelta(days=1)
+new_row = pd.DataFrame({'Date': [now.strftime('%d-%m-%Y')], 'PNL': [get_pnl(income_history)]})
+daily_PNL = pd.concat([daily_PNL, new_row], ignore_index=True)
+daily_PNL['Percentage Change'] = (daily_PNL['PNL']/initial_capital) * 100
+daily_PNL.drop_duplicates(subset=['Date'],inplace=True)
+daily_PNL.to_csv('daily_pnl.csv',index = False)
+plot_day_over_day(daily_PNL)
+send_mail("daily_change.png")
+        
+    
