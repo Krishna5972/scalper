@@ -74,7 +74,7 @@ class Order:
         
             self.take_profit = self.entry+((self.entry*0.06))
         else:
-            self.take_profit = self.entry+((self.entry*0.15))
+            self.take_profit = self.entry+((self.entry*0.024))
 
         #notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
         
@@ -121,9 +121,9 @@ class Order:
                 dualSidePosition=True
             )
         
-            self.take_profit = self.entry-((self.entry*0.0411))
+            self.take_profit = self.entry-((self.entry*0.06))
         else:
-            self.take_profit = self.entry-((self.entry*0.15))
+            self.take_profit = self.entry-((self.entry*0.024))
 
 
         #notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
