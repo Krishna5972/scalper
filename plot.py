@@ -19,12 +19,12 @@ def convert_timestamp_to_utc(timestamp_in_milliseconds):
 
 
 def get_pnl(income_history,yesterday = 1):
-    
     aggregations = {
-    'symbol': lambda x: mode(x).mode[0] if mode(x).count[0] > 1 else x.iloc[0],
+    'symbol': lambda x: x.mode().iloc[0] if x.value_counts().iloc[0] > 1 else x.iloc[0],
     'income': 'sum', 
-    'date': lambda x: mode(x).mode[0]  
+    'date': lambda x: x.mode().iloc[0]
 }
+
     
     
     df = pd.DataFrame(income_history)
