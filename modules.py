@@ -59,22 +59,23 @@ class Order:
         
         if big_profit == 0:
             price = self.entry - (self.entry * 0.0114)
-            rounded_price = round(price, self.round_price)
-            client.futures_create_order(
-                symbol=f'{self.coin}USDT',
-                side='BUY',
-                type='LIMIT',
-                price=rounded_price,
-                quantity=self.quantity,
-                timeInForce='GTC',
-                positionSide='LONG',
-                dualSidePosition=True
-            )
-
-        
             self.take_profit = self.entry+((self.entry*0.06))
         else:
+            price = self.entry - (self.entry * 0.024)
             self.take_profit = self.entry+((self.entry*0.024))
+
+
+        rounded_price = round(price, self.round_price)
+        client.futures_create_order(
+            symbol=f'{self.coin}USDT',
+            side='BUY',
+            type='LIMIT',
+            price=rounded_price,
+            quantity=self.quantity,
+            timeInForce='GTC',
+            positionSide='LONG',
+            dualSidePosition=True
+        )
 
         #notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
         
@@ -108,24 +109,25 @@ class Order:
                                     )
         
         if big_profit == 0:
-            price = self.entry + (self.entry * 0.0114)
-            rounded_price = round(price, self.round_price)
-            client.futures_create_order(
-                symbol=f'{self.coin}USDT',
-                side='SELL',
-                type='LIMIT',
-                price=rounded_price,
-                quantity=self.quantity,
-                timeInForce='GTC',
-                positionSide='SHORT',
-                dualSidePosition=True
-            )
-        
+            price = self.entry + (self.entry * 0.014)
             self.take_profit = self.entry-((self.entry*0.06))
         else:
+            price = self.entry + (self.entry * 0.024)
             self.take_profit = self.entry-((self.entry*0.024))
 
 
+
+        rounded_price = round(price, self.round_price)
+        client.futures_create_order(
+            symbol=f'{self.coin}USDT',
+            side='SELL',
+            type='LIMIT',
+            price=rounded_price,
+            quantity=self.quantity,
+            timeInForce='GTC',
+            positionSide='SHORT',
+            dualSidePosition=True
+        )
         #notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
         
         client.futures_create_order(

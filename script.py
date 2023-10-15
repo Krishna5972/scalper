@@ -216,10 +216,10 @@ async def main(shared_coin,current_trade):
                        
                 if long_signal_15m != long_signal_15m_prev:
                     if long_signal_15m == "Buy":
-                        order.make_buy_trade(client)
+                        order.make_buy_trade(client , big_profit=1)
                         notifier(f'Long15m : Buy => Bought')
                     elif long_signal_15m == "Sell":
-                        order.make_sell_trade(client)
+                        order.make_sell_trade(client,big_profit=1)
                         notifier(f'Long15m : Sell => Sold')
 
                 elif current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Buy':
