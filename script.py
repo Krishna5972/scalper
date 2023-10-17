@@ -372,9 +372,9 @@ async def main(shared_coin,current_trade):
                 if symbol['symbol'] == f"{coin}USDT":
                     round_quantity = symbol['quantityPrecision']
                     break
-
-            df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
-            df= df.tail(330).reset_index(drop=True)
+            if get_funding(coin) > -0.005:
+                df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
+                df= df.tail(330).reset_index(drop=True)
             df_copy = df.copy()
 
             try:
@@ -405,7 +405,7 @@ def main_execution():
     stake = 300
     check_for_volatilte_coin = 1
 
-    timeframe = '1m'
+    timeframe = '5m'
     print(f"Your timeframe of {timeframe} has been confirmed.")
 
     current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin,use_sl = 0)
