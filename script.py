@@ -90,10 +90,10 @@ async def main(shared_coin,current_trade):
         current_trade.round_quantity = 0
         notifier('Could not find quantityPrecision')
 
+    if get_funding(coin) > -0.005:
+        df=dataextract(coin,str_date,end_str,timeframe,client)
 
-    df=dataextract(coin,str_date,end_str,timeframe,client)
-
-    df= df.tail(330).reset_index(drop=True)
+        df= df.tail(330).reset_index(drop=True)
     df_copy = df.copy()
     pivot_st = PivotSuperTrendConfiguration()
     super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
@@ -302,10 +302,10 @@ async def main(shared_coin,current_trade):
                     if symbol['symbol'] == f"{coin}USDT":
                         round_quantity = symbol['quantityPrecision']
                         break
+                if get_funding(coin) > -0.0005:
+                    df=dataextract(coin,str_date,end_str,timeframe,client)
 
-                df=dataextract(coin,str_date,end_str,timeframe,client)
-
-                df = df.tail(330).reset_index(drop=True)
+                    df = df.tail(330).reset_index(drop=True)
                 df_copy = df.copy()
 
                 current_trade.round_quantity = round_quantity
@@ -320,21 +320,10 @@ async def main(shared_coin,current_trade):
                 close_any_open_positions(coin,client)
                 cancel_all_open_orders(coin,client)
                 
-            
+        stream = get_stream(coin, timeframe)
 
-                
-                
-                
-             
 
         TIMEOUT_SECONDS = 60
-
-        if is_spot_available(coin):
-            stream = f"wss://stream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}"
-            notifier(f'Connected to spot stream : {coin}')
-        else:
-            stream = f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}"
-            notifier(f'Connected to futures stream : {coin}')
 
         notifier(f'new stream : {stream}')
         async with websockets.connect(stream) as ws:

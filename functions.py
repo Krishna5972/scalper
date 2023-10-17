@@ -1602,3 +1602,38 @@ def is_spot_available(coin):
     return available
         
 
+def get_funding(coin):
+    url = 'https://www.binance.com/fapi/v1/premiumIndex'
+
+    try:
+        response = requests.get(url)
+        data = response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+    except requests.exceptions.ConnectionError as e:
+        print(f"Error: Unable to connect to the specified URL. {e}")
+    df = pd.DataFrame(data)
+    df['lastFundingRate']=df['lastFundingRate'].astype(float)
+    df = df.sort_values(by='lastFundingRate')
+    df['coin'] = df['symbol'].str.split('USDT').str[0]
+    return df[df['coin']==coin]['lastFundingRate'].iloc[0]
+
+
+def get_stream(coin, timeframe):
+    is_spot = is_spot_available(coin)
+    funding = get_funding(coin)
+    base_url = "wss://stream.binance.com/ws/"
+    futures_url = "wss://fstream.binance.com/ws/"
+    
+    if is_spot and funding > -0.0005:
+        url = base_url
+        notifier_msg = f'Connected to spot stream: {coin}'
+    else:
+        url = futures_url
+        notifier_msg = (f'Connected to futures stream: {coin} '
+                        f'as funding: {funding} and spot available: {is_spot}')
+
+    stream = f"{url}{str.lower(coin)}usdt@kline_{timeframe}"
+    notifier(notifier_msg)
+    
+    return stream
