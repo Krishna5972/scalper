@@ -1625,7 +1625,7 @@ def get_stream(coin, timeframe):
     base_url = "wss://stream.binance.com/ws/"
     futures_url = "wss://fstream.binance.com/ws/"
     
-    if is_spot and funding > -0.0005:
+    if is_spot and funding > -0.005:
         url = base_url
         notifier_msg = f'Connected to spot stream: {coin}'
     else:
