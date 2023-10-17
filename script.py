@@ -54,10 +54,6 @@ async def main(shared_coin,current_trade):
     usdt_leverage = max(usdt_leverage, max_usdt_leverage)
     busd_leverage = max(busd_leverage, max_busd_leverage)
 
-    is_usdt_exist=1
-    is_busd_exist=1
-
-    
 
     change_leverage(coin,max_usdt_leverage,max_busd_leverage)
 
@@ -69,7 +65,7 @@ async def main(shared_coin,current_trade):
     str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
     end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
 
-    df=dataextract(coin,str_date,end_str,timeframe,client)
+    df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
 
     df= df.tail(330).reset_index(drop=True)
 
@@ -86,7 +82,7 @@ async def main(shared_coin,current_trade):
         if symbol['symbol'] == f"{coin}USDT":
             round_quantity = symbol['quantityPrecision']
             break
-    df_copy = df.copy()
+    
 
     try:
         current_trade.round_quantity = round_quantity
@@ -95,6 +91,10 @@ async def main(shared_coin,current_trade):
         notifier('Could not find quantityPrecision')
 
 
+    df=dataextract(coin,str_date,end_str,timeframe,client)
+
+    df= df.tail(330).reset_index(drop=True)
+    df_copy = df.copy()
     pivot_st = PivotSuperTrendConfiguration()
     super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
     
@@ -112,11 +112,6 @@ async def main(shared_coin,current_trade):
     async def on_message(message,df,current_trade):
         data = json.loads(message)
         coin = current_trade.get_current_coin()
-        #now = datetime.utcnow()
-        # if now.hour == 23 and now.minute == 59:
-        #     close_any_open_positions(coin,client)
-        #     cancel_all_open_orders(coin,client)
-
         if data['k']['x'] == True:
             
             df = get_latest_df(data, df)
@@ -161,6 +156,7 @@ async def main(shared_coin,current_trade):
             prev_signal_long = get_prev_signal(super_df)
 
             str_date = (datetime.now()- timedelta(days=3)).strftime('%b %d,%Y')
+            
             df_15m=dataextract(coin,str_date,end_str,'15m',client)
 
             df_15m = df_15m.tail(330).reset_index(drop=True)
@@ -181,9 +177,6 @@ async def main(shared_coin,current_trade):
             upperband_15m = pivot_super_df_15m.iloc[-1]['upperband']
             lowerband_15m = pivot_super_df_15m.iloc[-1]['lowerband']
 
-
-            notifier(f"""Candle closed : {timeframe} , coin : {coin}
-                     long_signal_15m : {long_signal_15m} , long_signal_15m_prev : {long_signal_15m_prev}""")
             
             if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long) or ((long_signal_15m != long_signal_15m_prev ) and (datetime.now().minute in [0,15,30,45])): 
                 
@@ -214,22 +207,24 @@ async def main(shared_coin,current_trade):
                             upperband = upperband
                             )
                        
-                if long_signal_15m != long_signal_15m_prev:
-                    if long_signal_15m == "Buy":
-                        order.make_buy_trade(client , big_profit=1)
-                        notifier(f'Long15m : Buy => Bought')
-                    elif long_signal_15m == "Sell":
-                        order.make_sell_trade(client,big_profit=1)
-                        notifier(f'Long15m : Sell => Sold')
 
-                elif current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Buy':
+                if current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Buy':
                     order.make_buy_trade(client) 
                     notifier(f'ShortTerm : Sell , LongTerm : Buy , Long15m : Buy => Bought')
-              
+
+                if current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Sell':
+                    order.quantity = round(order.quantity/2,current_trade.round_quantity)
+                    order.make_buy_trade(client) 
+                    notifier(f'ShortTerm : Sell , LongTerm : Buy , Long15m : Sell => Bought with less amount')
 
                 elif current_signal_short == 'Buy' and current_signal_long == 'Sell' and long_signal_15m =='Sell':
                     order.make_sell_trade(client)
                     notifier(f'ShortTerm : Buy , LongTerm : Sell  , Long15m : Sell => Sold')
+
+                elif current_signal_short == 'Buy' and current_signal_long == 'Sell' and long_signal_15m =='Buy':
+                    order.quantity = round(order.quantity/2,current_trade.round_quantity)
+                    order.make_sell_trade(client)
+                    notifier(f'ShortTerm : Buy , LongTerm : Sell  , Long15m : Buy => Sold with less amount')
                 
 
 
@@ -281,7 +276,7 @@ async def main(shared_coin,current_trade):
                 str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
                 end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
 
-                df=dataextract(coin,str_date,end_str,timeframe,client)
+                df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
 
                 df = df.tail(330).reset_index(drop=True)
                 x_str = str(df['close'].iloc[-1])
@@ -305,6 +300,10 @@ async def main(shared_coin,current_trade):
                     if symbol['symbol'] == f"{coin}USDT":
                         round_quantity = symbol['quantityPrecision']
                         break
+
+                df=dataextract(coin,str_date,end_str,timeframe,client)
+
+                df = df.tail(330).reset_index(drop=True)
                 df_copy = df.copy()
 
                 current_trade.round_quantity = round_quantity
@@ -315,45 +314,26 @@ async def main(shared_coin,current_trade):
                 df_copy = df.copy()
                 trade_df=create_signal_df(super_df,df_copy,coin,timeframe,atr1,period,100,100)
 
-                signal = trade_df.iloc[-1]['signal']
 
                 close_any_open_positions(coin,client)
                 cancel_all_open_orders(coin,client)
                 
-                entry =  get_entry(super_df)              
-                over_all_trend = get_over_all_trend(coin)
-                lowerband = get_lowerband(super_df)
-                upperband = get_upperband(super_df)
+            
 
                 
-                #stake = get_stake(super_df,client,risk)
                 
-                quantity = round((stake/2)/entry, round_quantity)
-
-                partial_profit_take = round(quantity/2,round_quantity)
-
-                order = Order(coin = coin,
-                            entry = entry,
-                            quantity = quantity,
-                            round_price = round_price,
-                            change = None,
-                            partial_profit_take = partial_profit_take,
-                            lowerband = lowerband,
-                            upperband = upperband
-                            )
                 
-                notifier(f'round price : {order.round_price}')
-
-                if signal == "Buy":
-                    order.make_buy_trade(client,big_profit = 1)  
-                    notifier(f'Made a buy trade for {coin} looking for BIG Profit')
-                else:
-                    order.make_sell_trade(client,big_profit =1)
-                    notifier(f'Made a sell trade for {coin} for BIG Profit')
+             
 
         TIMEOUT_SECONDS = 60
 
-        stream = f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}"
+        if is_spot_available(coin):
+            stream = f"wss://stream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}"
+            notifier(f'Connected to spot stream : {coin}')
+        else:
+            stream = f"wss://fstream.binance.com/ws/{str.lower(coin)}usdt@kline_{timeframe}"
+            notifier(f'Connected to futures stream : {coin}')
+
         notifier(f'new stream : {stream}')
         async with websockets.connect(stream) as ws:
             try:
@@ -386,7 +366,7 @@ async def main(shared_coin,current_trade):
             #notifier(f'Old coin : {coin}')
             str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
             end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
-            df=dataextract(coin,str_date,end_str,timeframe,client)
+            df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
             df= df.tail(330).reset_index(drop=True)
 
             x_str = str(df['close'].iloc[-1])
@@ -401,6 +381,9 @@ async def main(shared_coin,current_trade):
                 if symbol['symbol'] == f"{coin}USDT":
                     round_quantity = symbol['quantityPrecision']
                     break
+
+            df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
+            df= df.tail(330).reset_index(drop=True)
             df_copy = df.copy()
 
             try:
@@ -428,10 +411,10 @@ def run_async_main(shared_coin,current_trade):
 def main_execution():
     coin = input("Please enter the coin name: ")
     coin = coin.upper()
-    stake = 600
+    stake = 300
     check_for_volatilte_coin = 1
 
-    timeframe = '5m'
+    timeframe = '1m'
     print(f"Your timeframe of {timeframe} has been confirmed.")
 
     current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin,use_sl = 0)

@@ -1589,3 +1589,16 @@ def change_leverage(coin,max_usdt_leverage,max_busd_leverage):
         notifier(f'SARAVANA BHAVA')
     except Exception as e:
         notifier(f'Met with exception {e}, sleeping for 5 minutes and trying again')
+
+
+def is_spot_available(coin):
+    available = 0
+    try:
+        klines=client.get_historical_klines(symbol=f'{coin}USDT', interval='5m')
+        available = 1
+    except Exception as e:
+        notifier(f'{coin} spot is not available')
+    
+    return available
+        
+

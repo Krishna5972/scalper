@@ -28,7 +28,7 @@ def create_df(klines,cols,coin,timeframe='_'):
     return df
 
 
-def dataextract(coin,start_str,end_str,interval_,client):
+def dataextract(coin,start_str,end_str,interval_,client,futures = 0):
     
     
     cols = ['OpenTime',
@@ -43,5 +43,12 @@ def dataextract(coin,start_str,end_str,interval_,client):
             f'{coin}-TBBAV',
             f'{coin}-TBQAV',
             f'{coin}-ignore']
-    klines=client.get_historical_klines(symbol=f'{coin}USDT', interval=interval_, start_str=start_str,end_str=end_str,klines_type=HistoricalKlinesType.FUTURES)
-    return create_df(klines,cols,coin,interval_)   
+    if futures == 0:
+        try:
+            klines=client.get_historical_klines(symbol=f'{coin}USDT', interval=interval_, start_str=start_str,end_str=end_str)
+        except Exception as e:
+            klines=client.get_historical_klines(symbol=f'{coin}USDT', interval=interval_, start_str=start_str,end_str=end_str,klines_type=HistoricalKlinesType.FUTURES)
+    else:
+        klines=client.get_historical_klines(symbol=f'{coin}USDT', interval=interval_, start_str=start_str,end_str=end_str,klines_type=HistoricalKlinesType.FUTURES)
+
+    return create_df(klines,cols,coin,interval_)
