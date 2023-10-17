@@ -1,0 +1,6 @@
+Risk Management
+
+if previous_short_term > 0  no risk Management
+
+
+else 2% risk
