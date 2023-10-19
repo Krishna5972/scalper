@@ -162,8 +162,6 @@ async def main(shared_coin,current_trade):
             df_15m = df_15m.tail(330).reset_index(drop=True)
 
 
-            df_15m = df_15m.iloc[:-1]
-
             pivot_super_df_15m = supertrend_pivot(coin, df_15m, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
             long_signal_15m = get_pivot_supertrend_signal(pivot_super_df_15m)
 
@@ -180,7 +178,7 @@ async def main(shared_coin,current_trade):
             notifier(f'Candle closed : {timeframe}')
 
             
-            if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long) or ((long_signal_15m != long_signal_15m_prev ) and (datetime.now().minute in [0,15,30,45])): 
+            if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long): 
                 
                 close_any_open_positions(coin,client)
                 cancel_all_open_orders(coin,client)
