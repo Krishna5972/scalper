@@ -57,8 +57,6 @@ async def main(shared_coin,current_trade):
 
     change_leverage(coin,max_usdt_leverage,max_busd_leverage)
 
-    client._create_futures_api_uri = create_futures_api_uri_v1.__get__(client, Client)
-
 
 
 
@@ -212,7 +210,7 @@ async def main(shared_coin,current_trade):
                     order.make_buy_trade(client) 
                     notifier(f'ShortTerm : Sell , LongTerm : Buy , Long15m : Buy => Bought')
 
-                if current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Sell':
+                elif current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Sell':
                     order.quantity = round(order.quantity/2,current_trade.round_quantity)
                     order.make_buy_trade(client) 
                     notifier(f'ShortTerm : Sell , LongTerm : Buy , Long15m : Sell => Bought with less amount')
@@ -319,11 +317,16 @@ async def main(shared_coin,current_trade):
                 cancel_all_open_orders(coin,client)
                 
         stream = get_stream(coin, timeframe)
+        if 'fstream' in stream:
+            current_trade.stream = 'futures'
+        else:
+            current_trade.stream = 'spot'
 
 
         TIMEOUT_SECONDS = 60
 
         notifier(f'new stream : {stream}')
+        funding_check = 0
         async with websockets.connect(stream) as ws:
             try:
                 while True:
@@ -332,6 +335,20 @@ async def main(shared_coin,current_trade):
                     if check_for_volatilte_coin == 1:
                         if coin != shared_coin.value:
                             break
+                    if funding_check > 600:
+                        funding = get_funding(coin)
+                        if current_trade.stream == 'spot' and funding < -0.005:
+                            notifier(f'{coin} funding rate increased so connecting to futures stream')
+                            break
+                        elif current_trade.stream != 'futures' and funding > -0.005:
+                            notifier(f'{coin} funding rate decreased so connecting to spot stream if it exists')
+
+                            break
+                        
+                        funding_check = 0
+                    
+                    funding_check += 1
+
                     
                     
             except asyncio.TimeoutError:

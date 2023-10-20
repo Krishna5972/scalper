@@ -9,6 +9,11 @@ else 2% risk
 
 Find the coin that recently did a extended shortterm gain/loss and hope for it to make a flag...
 
-isntead of super trend put fixed tp and sl... 3% stretch, lowerband of longTerm and upperband of short term of longs
 
-and between entry and sl, one more limit at 60%
+
+Entry is retrace, tup is not trend change, instead a limit order of initial upperband, and sl being longterm trend change
+
+position sizing depends on 15m long term
+
+
+

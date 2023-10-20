@@ -105,18 +105,7 @@ def notifier(message, tries=5, base_sleep=1):
     print(f'Failed to send message after {tries} attempts.')
 
 
-def create_futures_api_uri_v2(self, path: str) -> str:
-        url = self.FUTURES_URL
-        if self.testnet:
-            url = self.FUTURES_TESTNET_URL
-        return url + '/' + 'v2' + '/' + path
 
-
-def create_futures_api_uri_v1(self, path: str) -> str:
-        url = self.FUTURES_URL
-        if self.testnet:
-            url = self.FUTURES_TESTNET_URL
-        return url + '/' + 'v1' + '/' + path
 
 def get_signal(super_df):
     signal = ['Buy' if super_df.iloc[-1]
@@ -753,9 +742,7 @@ def get_entry(super_df):
 def get_stake(super_df,client,risk = 0.02):
     signal = get_signal(super_df)
     entry = get_entry(super_df)
-    client._create_futures_api_uri = create_futures_api_uri_v2.__get__(client, Client)
     acc_balance = round(float(client.futures_account()['totalCrossWalletBalance']), 2)
-    client._create_futures_api_uri = create_futures_api_uri_v1.__get__(client, Client)
     stake = (acc_balance*0.88)
     notifier(f'USDT : Allocated stake:{round(stake,2)}')
     if signal == 'Buy':
@@ -834,9 +821,7 @@ def get_ema(super_df,ema_condition = 'ema_81'):
 
 
 def close_any_open_positions(coin,client):
-    client._create_futures_api_uri = create_futures_api_uri_v2.__get__(client, Client)
     positions = client.futures_position_information(symbol=f'{coin}USDT')
-    client._create_futures_api_uri = create_futures_api_uri_v1.__get__(client, Client)
     closed = 0
   
     for position in positions:
@@ -872,7 +857,6 @@ def cancel_all_open_orders(coin,client):
 
 def close_long_position(coin,client):
     #close long position
-    client._create_futures_api_uri = create_futures_api_uri_v1.__get__(client, Client)
     client.futures_create_order(
                 symbol=f'{coin}USDT', side='SELL', type='MARKET', quantity=100000, dualSidePosition=True, positionSide='LONG')
     notifier(f'USDT : Long Position Closed')
@@ -893,7 +877,6 @@ def get_timeframe():
     return options[int(selection) - 1]
 def close_short_position(coin,client):
     #close short position
-    client._create_futures_api_uri = create_futures_api_uri_v1.__get__(client, Client)
     client.futures_create_order(
                 symbol=f'{coin}USDT', side='BUY', type='MARKET', quantity=100000, dualSidePosition=True, positionSide='SHORT')
     notifier(f'USDT : Short Position Closed') 
