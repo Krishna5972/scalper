@@ -340,7 +340,7 @@ async def main(shared_coin,current_trade):
                         if current_trade.stream == 'spot' and funding < -0.005:
                             notifier(f'{coin} funding rate increased so connecting to futures stream')
                             break
-                        elif current_trade.stream != 'futures' and funding > -0.005:
+                        elif current_trade.stream == 'futures' and funding > -0.005:
                             notifier(f'{coin} funding rate decreased so connecting to spot stream if it exists')
 
                             break
