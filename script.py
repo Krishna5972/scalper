@@ -126,6 +126,9 @@ async def main(shared_coin,current_trade):
 
             super_df = pivot_super_df
 
+            notifier(f'short term Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
+            notifier(f'short term Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
+
             upperband_1 = pivot_super_df.iloc[-1]['upperband']
             lowerband_1 = pivot_super_df.iloc[-1]['lowerband']
 
@@ -174,6 +177,9 @@ async def main(shared_coin,current_trade):
             lowerband_15m = pivot_super_df_15m.iloc[-1]['lowerband']
 
             notifier(f'Candle closed : {timeframe}')
+
+            notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
+            notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
 
             
             if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long): 
@@ -270,11 +276,22 @@ async def main(shared_coin,current_trade):
 
                 coin = shared_coin.value
                 current_trade.set_current_coin(coin)
+                current_trade.coin = coin
                 notifier(f"Coin changed! Now trading {coin}.")
                 str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
                 end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
 
-                df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
+                stream = get_stream(coin, timeframe)
+                current_trade.is_spot = is_spot_available(coin)
+                if 'fstream' in stream:
+                    current_trade.stream = 'futures'
+                else:
+                    current_trade.stream = 'spot'
+                
+                if current_trade.stream == 'futures':
+                    df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
+                else:
+                    df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
 
                 df = df.tail(330).reset_index(drop=True)
                 x_str = str(df['close'].iloc[-1])
@@ -316,13 +333,13 @@ async def main(shared_coin,current_trade):
                 close_any_open_positions(coin,client)
                 cancel_all_open_orders(coin,client)
                 
+        
         stream = get_stream(coin, timeframe)
         current_trade.is_spot = is_spot_available(coin)
         if 'fstream' in stream:
             current_trade.stream = 'futures'
         else:
             current_trade.stream = 'spot'
-
 
         TIMEOUT_SECONDS = 60
 
@@ -373,7 +390,23 @@ async def main(shared_coin,current_trade):
             #notifier(f'Old coin : {coin}')
             str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
             end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
-            df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
+
+            coin = current_trade.get_current_coin()
+
+            notifier(f'Met with an error now getting data for coin : {coin}')
+
+            stream = get_stream(coin, timeframe)
+            current_trade.is_spot = is_spot_available(coin)
+            if 'fstream' in stream:
+                current_trade.stream = 'futures'
+            else:
+                current_trade.stream = 'spot'
+            
+            if current_trade.stream == 'futures':
+                df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
+            else:
+                df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
+        
             df= df.tail(330).reset_index(drop=True)
 
             x_str = str(df['close'].iloc[-1])
@@ -388,9 +421,7 @@ async def main(shared_coin,current_trade):
                 if symbol['symbol'] == f"{coin}USDT":
                     round_quantity = symbol['quantityPrecision']
                     break
-            if get_funding(coin) > -0.005:
-                df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
-                df= df.tail(330).reset_index(drop=True)
+         
             df_copy = df.copy()
 
             try:

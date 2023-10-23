@@ -1047,3 +1047,30 @@ OSError: [WinError 121] The semaphore timeout period has expired
 2023-10-23 00:57:58,106 - INFO - Data fetched successfully
 2023-10-23 01:03:41,166 - INFO - Data fetched successfully
 2023-10-23 01:08:57,890 - INFO - Data fetched successfully
+2023-10-23 07:34:54,667 - INFO - Data fetched successfully
+2023-10-23 07:43:07,842 - INFO - Data fetched successfully
+2023-10-23 07:51:15,140 - INFO - Data fetched successfully
+2023-10-23 07:59:27,977 - INFO - Data fetched successfully
+2023-10-23 08:06:53,049 - INFO - Data fetched successfully
+2023-10-23 08:16:45,948 - INFO - Data fetched successfully
+2023-10-23 08:26:47,839 - INFO - Data fetched successfully
+2023-10-23 08:33:03,544 - INFO - Data fetched successfully
+2023-10-23 08:43:25,312 - INFO - Data fetched successfully
+2023-10-23 08:48:36,092 - INFO - Data fetched successfully
+2023-10-23 08:56:54,955 - INFO - Data fetched successfully
+2023-10-23 09:07:12,448 - INFO - Data fetched successfully
+2023-10-23 09:10:47,197 - INFO - Data fetched successfully
+2023-10-23 09:18:57,833 - INFO - Data fetched successfully
+2023-10-23 09:22:00,167 - ERROR - Fatal error on SSL transport
+protocol: <asyncio.sslproto.SSLProtocol object at 0x00000267E64C95B0>
+transport: <_ProactorSocketTransport fd=-1 read=<_OverlappedFuture cancelled>>
+Traceback (most recent call last):
+  File "C:\ProgramData\Anaconda3\lib\asyncio\sslproto.py", line 690, in _process_write_backlog
+    self._transport.write(chunk)
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 359, in write
+    self._loop_writing(data=bytes(data))
+  File "C:\ProgramData\Anaconda3\lib\asyncio\proactor_events.py", line 395, in _loop_writing
+    self._write_fut = self._loop._proactor.send(self._sock, data)
+AttributeError: 'NoneType' object has no attribute 'send'
+2023-10-23 09:22:00,403 - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-1274' coro=<WebSocketCommonProtocol.close_connection() done, defined at C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py:1273> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x00000267E6931190>()]> cb=[_gather.<locals>._done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:767, shield.<locals>._inner_done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:890]>
