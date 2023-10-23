@@ -258,7 +258,7 @@ class Order:
         #notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
 
 class CurrentTrade:
-    def __init__(self,coin,stake,timeframe,use_sl,round_quantity = None,round_price = None,check_for_volatilte_coin=0,stream = 'spot'):
+    def __init__(self,coin,stake,timeframe,use_sl,round_quantity = None,round_price = None,check_for_volatilte_coin=0,stream = 'spot',is_spot = True):
         self.coin = coin
         self.stake = stake
         self.timeframe = timeframe
@@ -267,6 +267,7 @@ class CurrentTrade:
         self.check_for_volatilte_coin = check_for_volatilte_coin
         self.use_sl = use_sl
         self.stream = stream
+        self.is_spot = is_spot
 
     def get_current_coin(self):
         return self.coin

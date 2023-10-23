@@ -141,7 +141,7 @@ async def main(shared_coin,current_trade):
             #trade_df = create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
             
-            pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2.8, pivot_period = 2)
+            pivot_st = PivotSuperTrendConfiguration(period = 3, atr_multiplier = 3, pivot_period = 3)
             pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
             pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
             current_pivot_signal = pivot_signal
@@ -317,6 +317,7 @@ async def main(shared_coin,current_trade):
                 cancel_all_open_orders(coin,client)
                 
         stream = get_stream(coin, timeframe)
+        current_trade.is_spot = is_spot_available(coin)
         if 'fstream' in stream:
             current_trade.stream = 'futures'
         else:
@@ -340,7 +341,7 @@ async def main(shared_coin,current_trade):
                         if current_trade.stream == 'spot' and funding < -0.005:
                             notifier(f'{coin} funding rate increased so connecting to futures stream')
                             break
-                        elif current_trade.stream == 'futures' and funding > -0.005:
+                        elif current_trade.stream == 'futures' and funding > -0.005 and current_trade.is_spot == 1:
                             notifier(f'{coin} funding rate decreased so connecting to spot stream if it exists')
 
                             break
@@ -417,10 +418,10 @@ def run_async_main(shared_coin,current_trade):
 def main_execution():
     coin = input("Please enter the coin name: ")
     coin = coin.upper()
-    stake = 300
+    stake = 404
     check_for_volatilte_coin = 1
 
-    timeframe = '5m'
+    timeframe = '3m'
     print(f"Your timeframe of {timeframe} has been confirmed.")
 
     current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin,use_sl = 0)
