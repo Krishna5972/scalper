@@ -40,7 +40,7 @@ class TradeHistory():
         
 class Order:
     def __init__(self,coin,entry,quantity,round_price,take_profit = None , stop_loss = None,change = None ,
-                  partial_profit_take = None, lowerband = None , upperband = None):
+                  partial_profit_take = None, lowerband = None , upperband = None,master_order_history = None):
         self.coin = coin.upper()
         self.quantity = quantity
         self.take_profit = take_profit
@@ -51,22 +51,31 @@ class Order:
         self.partial_profit_take = partial_profit_take
         self.lowerband = lowerband
         self.upperband = upperband
-        
+        self.master_order_history = master_order_history
     def make_buy_trade(self,client,big_profit = 0):
         
         client.futures_create_order(symbol=f'{self.coin}USDT', side='BUY', type='MARKET', quantity=self.quantity, dualSidePosition=True, positionSide='LONG')
 
-        
-        if big_profit == 0:
-            price = self.entry - (self.entry * 0.0114)
-            self.take_profit = self.entry+((self.entry*0.06))
-        else:
-            price = self.entry - (self.entry * 0.024)
-            self.take_profit = self.entry+((self.entry*0.024))
+        # self.entry = round(self.entry,self.round_price)
 
+        # client.futures_create_order(
+        #     symbol=f'{self.coin}USDT',
+        #     side='BUY',
+        #     type='LIMIT',
+        #     price=self.entry,
+        #     quantity=self.quantity,
+        #     timeInForce='GTC',
+        #     positionSide='LONG',
+        #     dualSidePosition=True
+        # )
+        
+        
+        price = self.entry - (self.entry * 0.0114)
+        
+        
 
         rounded_price = round(price, self.round_price)
-        client.futures_create_order(
+        dca_order_details = client.futures_create_order(
             symbol=f'{self.coin}USDT',
             side='BUY',
             type='LIMIT',
@@ -77,14 +86,16 @@ class Order:
             dualSidePosition=True
         )
 
+       
+
         #notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
         
-        client.futures_create_order(
+        limit_order_details  = client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
                                     price=round(self.take_profit, self.round_price),
                                     side='SELL',
                                     positionSide='LONG',
-                                    quantity=self.partial_profit_take,
+                                    quantity=self.quantity,
                                     timeInForce='GTC',
                                     type='LIMIT',
                                     # reduceOnly=True,cc
@@ -95,6 +106,11 @@ class Order:
                                 )
         #notifier(f'Coin :{self.coin}, Quantity : {self.quantity } stake : {round(self.quantity*self.entry,2)}')
         #notifier(f'Buy order placed for coin :{self.coin}, TP : {self.take_profit}')
+
+        coin_dict = self.master_order_history.setdefault(self.coin, {})
+        buy_dict = coin_dict.setdefault('Buy', {})
+
+        buy_dict[self.take_profit] = {limit_order_details['orderId'] : dca_order_details['orderId']}
         
         
     def make_sell_trade(self,client,big_profit = 0):
@@ -108,17 +124,18 @@ class Order:
                                         positionSide='SHORT'
                                     )
         
-        if big_profit == 0:
-            price = self.entry + (self.entry * 0.014)
-            self.take_profit = self.entry-((self.entry*0.06))
-        else:
-            price = self.entry + (self.entry * 0.024)
-            self.take_profit = self.entry-((self.entry*0.024))
 
 
 
+       
+       
+        price = self.entry + (self.entry * 0.014)
+           
+
+
+        # DCA
         rounded_price = round(price, self.round_price)
-        client.futures_create_order(
+        dca_order_details = client.futures_create_order(
             symbol=f'{self.coin}USDT',
             side='SELL',
             type='LIMIT',
@@ -129,13 +146,15 @@ class Order:
             dualSidePosition=True
         )
         #notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
+
+        #
         
-        client.futures_create_order(
+        limit_order_details = client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
                                     price=round(self.take_profit, self.round_price),
                                     side='BUY',
                                     positionSide='SHORT',
-                                    quantity=self.partial_profit_take,
+                                    quantity=self.quantity,
                                     timeInForce='GTC',
                                     type='LIMIT',
                                     # reduceOnly=True,
@@ -149,7 +168,11 @@ class Order:
         #notifier(f'Sell order placed for coin :{self.coin}, TP : {self.take_profit}')
 
         
-        
+        coin_dict = self.master_order_history.setdefault(self.coin, {})
+        sell_dict = coin_dict.setdefault('Sell', {})
+
+        sell_dict[self.take_profit] = {limit_order_details['orderId'] : dca_order_details['orderId']}
+
     def make_inverse_buy_trade(self,client):
         client.futures_create_order(symbol=f'{self.coin}USDT', side='BUY', type='MARKET', quantity=self.quantity, dualSidePosition=True, positionSide='LONG')
 

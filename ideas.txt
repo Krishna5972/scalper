@@ -17,3 +17,54 @@ position sizing depends on 15m long term
 
 
 
+Buy : {
+
+
+   'limitOrderPirce' :  'orderID' 
+}
+
+sell : {
+
+    'limitOrderPirce' :  'orderID' 
+}
+
+if currentPrice > 'limitOrderPirce':
+    cancel that limit order
+
+
+
+    Checks
+
+Short Term change Sell in Long Term
+
+TP placed at lowerband of short term buy  Done
+Dca at 1.4  Done
+
+if TP is reached is DCA order getting canclled Done
+
+IF trend changed before tp, should still be in position,  Done
+
+but the dca order with respect to the trend should be cancelled, but tp order should profit qty should increase
+
+
+# Structure of `master_order_history`:
+# {
+#     'coin_name_1': {                     # Each coin has its own dictionary.
+#         'Sell': {                        # 'Sell' dictionary for sell orders.
+#             'take_profit_value_1': {     # 'take_profit' value as a key.
+#                 'limit_order_id_1': 'dca_order_id_1',  # Pairing of limit order ID and DCA order ID.
+#                 ...
+#             },
+#             ...
+#         },
+#         ...
+#     },
+#     'coin_name_2': {...},
+#     ...
+# }
+
+
+Problems:
+
+
+Previous long is a win stake/4 

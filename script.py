@@ -21,7 +21,9 @@ from multiprocessing import Process, Manager
 from functions import *
 
 
-async def main(shared_coin,current_trade):
+async def main(shared_coin,current_trade,master_order_history):
+
+     
     telegram_auth_token='5515290544:AAG9T15VaY6BIxX2VYX8x2qr34aC-zVEYMo'
     telegram_group_id='notifier2_scanner_bot_link'
 
@@ -79,6 +81,7 @@ async def main(shared_coin,current_trade):
     for symbol in exchange_info['symbols']:
         if symbol['symbol'] == f"{coin}USDT":
             round_quantity = symbol['quantityPrecision']
+            notifier(f'Precesion for coin : {coin} : {round_quantity}')
             break
     
 
@@ -107,7 +110,7 @@ async def main(shared_coin,current_trade):
 
     df = df[['OpenTime', 'open', 'high', 'low', 'close', 'volume']]
 
-    async def on_message(message,df,current_trade):
+    async def on_message(message,df,current_trade,master_order_history):
         data = json.loads(message)
         coin = current_trade.get_current_coin()
         if data['k']['x'] == True:
@@ -126,8 +129,8 @@ async def main(shared_coin,current_trade):
 
             super_df = pivot_super_df
 
-            notifier(f'short term Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
-            notifier(f'short term Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
+            # notifier(f'short term Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
+            # notifier(f'short term Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
 
             upperband_1 = pivot_super_df.iloc[-1]['upperband']
             lowerband_1 = pivot_super_df.iloc[-1]['lowerband']
@@ -144,7 +147,7 @@ async def main(shared_coin,current_trade):
             #trade_df = create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
             
-            pivot_st = PivotSuperTrendConfiguration(period = 3, atr_multiplier = 3, pivot_period = 3)
+            pivot_st = PivotSuperTrendConfiguration(period = 2, atr_multiplier = 2.8, pivot_period = 2)
             pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
             pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
             current_pivot_signal = pivot_signal
@@ -156,48 +159,137 @@ async def main(shared_coin,current_trade):
             current_signal_long = signal_long
             prev_signal_long = get_prev_signal(super_df)
 
-            str_date = (datetime.now()- timedelta(days=3)).strftime('%b %d,%Y')
             
-            df_15m=dataextract(coin,str_date,end_str,'15m',client)
-
-            df_15m = df_15m.tail(330).reset_index(drop=True)
+           
 
 
-            pivot_super_df_15m = supertrend_pivot(coin, df_15m, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
-            long_signal_15m = get_pivot_supertrend_signal(pivot_super_df_15m)
+            trade_df=create_signal_df(super_df,df_copy,coin,timeframe,atr1,period,100,100)
 
-            long_signal_15m_prev = get_prev_signal(pivot_super_df_15m)
+            prev_trade_perc = trade_df.iloc[-2]['percentage']
 
-            
+            limit_stake = 0
 
-            upperband_2_6 = pivot_super_df.iloc[-1]['upperband']
-            lowerband_2_6= pivot_super_df.iloc[-1]['lowerband']
+            if prev_trade_perc > 0:
+                limit_stake = 1
 
-            upperband_15m = pivot_super_df_15m.iloc[-1]['upperband']
-            lowerband_15m = pivot_super_df_15m.iloc[-1]['lowerband']
 
             notifier(f'Candle closed : {timeframe}')
 
-            notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
-            notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
+            # notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
+            # notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
 
             
             if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long): 
+
+                if current_signal_long != prev_signal_long:
+                    close_any_open_positions(coin,client)
+                    cancel_all_open_orders(coin,client)
+                    notifier('Long term trend changed closing positions and all open trades')
+                    master_order_history = {}
+
+                #if tp limit order is not reached, the dca orders will still be here, so cancel them.
+                dca_order_ids = []
+      
+
+                for coin, order_types in master_order_history.items():
+                    for order_type, take_profits in order_types.items():
+                        for take_profit in list(take_profits.keys()):
+                            for limit_order_id in list(take_profits[take_profit].keys()):
+                                dca_order_id = take_profits[take_profit][limit_order_id]
+                                dca_order_ids.append([dca_order_id,take_profit])
+                                del take_profits[take_profit][limit_order_id]
+                                if not take_profits[take_profit]:
+                                    del take_profits[take_profit]
+
+
+
+                #before cancelling checking if dca is reached to increase tp position
+
+               
+                account_history = client.futures_account_trades(limit=100)
+                account_orders = pd.DataFrame(account_history)
+
+                account_order_history_dict = {}
+                for index, row in account_orders.iterrows():
+                    order_id = row['orderId']
+                    side = row['side']
+                    qty = row['qty']
+                    account_order_history_dict[order_id] = {'side': side, 'qty': qty}
+
+
+                # {
+                #     'id' : {
+                #         'side' : "BUY",
+                #         'qty' : 0.16
+                #     }
+                # }
+
+
                 
-                close_any_open_positions(coin,client)
-                cancel_all_open_orders(coin,client)
-                #middle_dc = get_middle_dc(client,coin)
+                if len(dca_order_ids) > 0:
+                    for idx,order_id in enumerate(dca_order_ids):  #it means dca has hit for trend so i need to increase the profit limit
+                        if order_id[0] in  list(account_orders['orderId']):
+                            side = account_order_history_dict[order_id[0]]['side']
+                            qty = account_order_history_dict[order_id[0]]['qty']
+                            price = order_id[1]
+
+                            if side == 'BUY':
+                                client.futures_create_order(
+                                    symbol=f'{coin}USDT',
+                                    price=round(price,current_trade.round_price),
+                                    side='SELL',
+                                    positionSide='LONG',
+                                    quantity=float(qty),
+                                    timeInForce='GTC',
+                                    type='LIMIT',
+                                    # reduceOnly=True,cc
+                                    closePosition=False,
+                                    # stopPrice=round(take_profit,2),
+                                    workingType='MARK_PRICE',
+                                    priceProtect=True
+                                )
+                            else:
+                                client.futures_create_order(
+                                    symbol=f'{coin}USDT',
+                                    price=round(price,current_trade.round_price),
+                                    side='BUY',
+                                    positionSide='SHORT',
+                                    quantity=float(qty),
+                                    timeInForce='GTC',
+                                    type='LIMIT',
+                                    # reduceOnly=True,
+                                    closePosition=False,
+                                    # stopPrice=round(take_profit,2),
+                                    workingType='MARK_PRICE',
+                                    priceProtect=True
+                               )
+
+
+
+
+
+
+
+                if len(dca_order_ids) > 0:
+                    for order_id in dca_order_ids:
+                        try:
+                            client.futures_cancel_order(symbol=f'{coin}USDT', orderId=order_id[0])
+                            notifier(f'Order id : DCA order : {order_id[0]} is cancelled as trend changed')
+                        except Exception as e:
+                            notifier('DCAed so cannot cannel as order is already filled')
+
+            
+
                 entry =  get_entry(super_df)              
-                #over_all_trend = get_over_all_trend(coin)
-                lowerband = get_lowerband(super_df)
-                upperband = get_upperband(super_df)
-                
-                #stake = get_stake(super_df,client,risk)
+
                 
                 quantity = round(stake/entry, current_trade.round_quantity)
                 partial_profit_take = round(quantity/2,current_trade.round_quantity) 
                 
-
+                if current_signal_short == "Sell": # Do the inverse
+                    take_profit = upperband_1
+                else:
+                    take_profit = lowerband_1
 
           
                 
@@ -206,26 +298,27 @@ async def main(shared_coin,current_trade):
                             quantity = quantity,
                             round_price = current_trade.round_price,
                             change = None,
-                            partial_profit_take = partial_profit_take,
-                            lowerband = lowerband,
-                            upperband = upperband
+                            take_profit  = take_profit,
+                            lowerband = lowerband_1,
+                            upperband = upperband_1,
+                            master_order_history = master_order_history
                             )
                        
 
-                if current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Buy':
+                if current_signal_short == 'Sell' and current_signal_long == 'Buy' and limit_stake == 0:
                     order.make_buy_trade(client) 
                     notifier(f'ShortTerm : Sell , LongTerm : Buy , Long15m : Buy => Bought')
 
-                elif current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Sell':
+                elif current_signal_short == 'Sell' and current_signal_long == 'Buy' and limit_stake ==1:
                     order.quantity = round(order.quantity/2,current_trade.round_quantity)
                     order.make_buy_trade(client) 
                     notifier(f'ShortTerm : Sell , LongTerm : Buy , Long15m : Sell => Bought with less amount')
 
-                elif current_signal_short == 'Buy' and current_signal_long == 'Sell' and long_signal_15m =='Sell':
+                elif current_signal_short == 'Buy' and current_signal_long == 'Sell' and limit_stake == 0:
                     order.make_sell_trade(client)
                     notifier(f'ShortTerm : Buy , LongTerm : Sell  , Long15m : Sell => Sold')
 
-                elif current_signal_short == 'Buy' and current_signal_long == 'Sell' and long_signal_15m =='Buy':
+                elif current_signal_short == 'Buy' and current_signal_long == 'Sell' and limit_stake == 1:
                     order.quantity = round(order.quantity/2,current_trade.round_quantity)
                     order.make_sell_trade(client)
                     notifier(f'ShortTerm : Buy , LongTerm : Sell  , Long15m : Buy => Sold with less amount')
@@ -240,8 +333,8 @@ async def main(shared_coin,current_trade):
                 else:
                     notifier(f'Waiting Patiently to strike.....')      
             
+                
             
-               
 
 
         
@@ -349,7 +442,7 @@ async def main(shared_coin,current_trade):
             try:
                 while True:
                     message = await asyncio.wait_for(ws.recv(), timeout=TIMEOUT_SECONDS)
-                    df = await on_message(message,df,current_trade)
+                    df = await on_message(message,df,current_trade,master_order_history)
                     if check_for_volatilte_coin == 1:
                         if coin != shared_coin.value:
                             break
@@ -365,6 +458,40 @@ async def main(shared_coin,current_trade):
                         
                         funding_check = 0
                     
+                    high = df.iloc[-1]['high']
+                    low = df.iloc[-1]['low']
+
+                    dca_orders = []
+   
+        
+                    if current_trade.coin in master_order_history and 'Buy' in master_order_history[current_trade.coin]:
+                        buy_dict = master_order_history[current_trade.coin]['Buy']
+                        for rounded_price in list(buy_dict.keys()):  # iterate over a copy of the keys
+                            if high > rounded_price:
+                                dca_orders.extend(buy_dict[rounded_price].values())
+                                del buy_dict[rounded_price]  # remove the key-value pair from the dictionary
+                               
+                    if current_trade.coin in master_order_history and 'Sell' in master_order_history[current_trade.coin]:
+                        buy_dict = master_order_history[current_trade.coin]['Sell']
+                        for rounded_price in list(buy_dict.keys()):  # iterate over a copy of the keys
+                            if low < rounded_price:
+                                dca_orders.extend(buy_dict[rounded_price].values())
+                                del buy_dict[rounded_price]  # remove the key-value pair from the dictionary
+                               
+                    if len(dca_orders) > 0:
+                        for order_id in dca_orders:
+                            try:
+                                client.futures_cancel_order(symbol=f'{coin}USDT', orderId=order_id)
+                                notifier(f'Order id : {order_id} is cancelled')
+                            except Exception as e:
+                                notifier(f'DCAed so cannot cancel the order')
+                            
+                            
+
+
+        
+
+
                     funding_check += 1
 
                     
@@ -441,18 +568,19 @@ async def main(shared_coin,current_trade):
 
 # Run the asyncio event loop
 
-def run_async_main(shared_coin,current_trade):
-        asyncio.run(main(shared_coin,current_trade))
+def run_async_main(shared_coin,current_trade,master_order_history):
+        asyncio.run(main(shared_coin,current_trade,master_order_history))
 
 
 
 def main_execution():
     coin = input("Please enter the coin name: ")
     coin = coin.upper()
-    stake = 404
+    stake = 300
     check_for_volatilte_coin = 1
+    master_order_history = {}
 
-    timeframe = '3m'
+    timeframe = '5m'
     print(f"Your timeframe of {timeframe} has been confirmed.")
 
     current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin,use_sl = 0)
@@ -465,7 +593,7 @@ def main_execution():
     
 
     p1 = Process(target=get_most_volatile_coin_d, args=(shared_coin,))
-    p2 = Process(target=run_async_main, args=(shared_coin,current_trade))
+    p2 = Process(target=run_async_main, args=(shared_coin,current_trade,master_order_history))
 
 
     p1.start()
