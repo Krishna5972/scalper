@@ -129,8 +129,10 @@ async def main(shared_coin,current_trade,master_order_history):
 
             super_df = pivot_super_df
 
-            # notifier(f'short term Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
-            # notifier(f'short term Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
+            notifier(f'short term Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
+            notifier(f'short term Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
+
+            print(f'Len of shorttem {pivot_super_df.shape[0]}')
 
             upperband_1 = pivot_super_df.iloc[-1]['upperband']
             lowerband_1 = pivot_super_df.iloc[-1]['lowerband']
@@ -175,8 +177,8 @@ async def main(shared_coin,current_trade,master_order_history):
 
             notifier(f'Candle closed : {timeframe}')
 
-            # notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
-            # notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
+            notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
+            notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
 
             
             if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long): 
@@ -304,6 +306,7 @@ async def main(shared_coin,current_trade,master_order_history):
                             master_order_history = master_order_history
                             )
                        
+                notifier(f'Entry for coin {coin} {entry}')
 
                 if current_signal_short == 'Sell' and current_signal_long == 'Buy' and limit_stake == 0:
                     order.make_buy_trade(client) 
@@ -576,7 +579,7 @@ def run_async_main(shared_coin,current_trade,master_order_history):
 def main_execution():
     coin = input("Please enter the coin name: ")
     coin = coin.upper()
-    stake = 300
+    stake = 30
     check_for_volatilte_coin = 1
     master_order_history = {}
 

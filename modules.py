@@ -53,6 +53,8 @@ class Order:
         self.upperband = upperband
         self.master_order_history = master_order_history
     def make_buy_trade(self,client,big_profit = 0):
+
+        print(f'Making trade for coin : {self.coin}')
         
         client.futures_create_order(symbol=f'{self.coin}USDT', side='BUY', type='MARKET', quantity=self.quantity, dualSidePosition=True, positionSide='LONG')
 
@@ -75,6 +77,9 @@ class Order:
         
 
         rounded_price = round(price, self.round_price)
+
+        print(f'DCA Buy for coin {self.coin} : {rounded_price}')
+
         dca_order_details = client.futures_create_order(
             symbol=f'{self.coin}USDT',
             side='BUY',
@@ -89,7 +94,7 @@ class Order:
        
 
         #notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
-        
+        print(f'Buy : Limit Buy for coin {self.coin}  {round(self.take_profit, self.round_price)}')
         limit_order_details  = client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
                                     price=round(self.take_profit, self.round_price),
@@ -115,6 +120,7 @@ class Order:
         
     def make_sell_trade(self,client,big_profit = 0):
         
+        print(f'Making trade for coin : {self.coin}')
         
         client.futures_create_order(
                                         symbol=f'{self.coin}USDT', side='SELL', 
@@ -130,11 +136,16 @@ class Order:
        
        
         price = self.entry + (self.entry * 0.014)
+
+        
            
 
 
         # DCA
         rounded_price = round(price, self.round_price)
+
+        print(f'DCA sell for coin {self.coin} : {rounded_price}')
+
         dca_order_details = client.futures_create_order(
             symbol=f'{self.coin}USDT',
             side='SELL',
@@ -148,7 +159,8 @@ class Order:
         #notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
 
         #
-        
+        print(f'SELL : Limit sell for coin {self.coin}  {round(self.take_profit, self.round_price)}')
+
         limit_order_details = client.futures_create_order(
                                     symbol=f'{self.coin}USDT',
                                     price=round(self.take_profit, self.round_price),
