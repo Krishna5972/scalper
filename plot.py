@@ -131,11 +131,11 @@ def send_mail(filename, subject='SARAVANA BHAVA'):
     print(f'Sent {filename}')
 
 
-initial_capital = 385
+initial_capital = 60
 client=Client(config.api_key,config.secret_key)
 
 daily_PNL = pd.read_csv('daily_pnl.csv')
-income_history = client.futures_income_history(limit = 500)
+income_history = client.futures_income_history(limit = 1000)
 now = datetime.utcnow() - timedelta(days=1)
 new_row = pd.DataFrame({'Date': [now.strftime('%d-%m-%Y')], 'PNL': [get_pnl(income_history)]})
 daily_PNL = pd.concat([daily_PNL, new_row], ignore_index=True)
