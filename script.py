@@ -167,12 +167,15 @@ async def main(shared_coin,current_trade,master_order_history):
 
             trade_df=create_signal_df(super_df,df_copy,coin,timeframe,atr1,period,100,100)
 
-            prev_trade_perc = trade_df.iloc[-2]['percentage']
-
             limit_stake = 0
 
-            if prev_trade_perc > 0:
-                limit_stake = 1
+            if trade_df.shape[0] > 3:
+                prev_trade_perc = trade_df.iloc[-2]['percentage']
+
+                
+
+                if prev_trade_perc > 0:
+                    limit_stake = 1
 
 
             notifier(f'Candle closed : {timeframe}')
