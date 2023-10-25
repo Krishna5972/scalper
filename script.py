@@ -178,7 +178,7 @@ async def main(shared_coin,current_trade,master_order_history):
                     limit_stake = 1
 
 
-            notifier(f'Candle closed : {timeframe}')
+            notifier(f'Candle closed {coin} : {timeframe}')
 
             notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
             notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
@@ -442,8 +442,11 @@ async def main(shared_coin,current_trade,master_order_history):
 
         TIMEOUT_SECONDS = 60
 
+        current_trade.coin = coin
         notifier(f'new stream : {stream}')
+        notifier(f'Current Trade oject value : {current_trade.coin}')
         funding_check = 0
+        dca_check = 0
         async with websockets.connect(stream) as ws:
             try:
                 while True:
@@ -491,12 +494,87 @@ async def main(shared_coin,current_trade,master_order_history):
                                 notifier(f'Order id : {order_id} is cancelled')
                             except Exception as e:
                                 notifier(f'DCAed so cannot cancel the order')
+                    if dca_check > 15:
+                        dca_check = 0
+                        buys = master_order_history.get(current_trade.coin, {}).get('Buy', {})
+                        buy_keys = list(buys.keys())[0] if buys else None
+
+                        buy_value = buys.get(buy_keys) if buy_keys else None
+
+                        # If buy_value is a dictionary and it's not empty, get the value of its first key.
+                        dca_buy_order = list(buy_value.values())[0] if (buy_value and isinstance(buy_value, dict)) else None
+
+                        sells = master_order_history.get(current_trade.coin, {}).get('Sell', {})
+                        sell_keys = list(sells.keys())[0] if sells else None
+
+                        sell_value = sells.get(sell_keys) if sell_keys else None
+
+                        # If sell_value is a dictionary and it's not empty, get the value of its first key.
+                        dca_sell_order = list(sell_value.values())[0] if (sell_value and isinstance(sell_value, dict)) else None
+
+                        order_details = {}
+
+                        if dca_buy_order is not None:
+                            order_details = {
+                                'orderId' : dca_buy_order,
+                                'price' : buy_keys
+                            }
+                        elif dca_sell_order is not None:
+                            order_details = {
+                                'orderId' : dca_sell_order,
+                                'price' : sell_keys
+                            }
+
+                        account_history = client.futures_account_trades(limit=100)
+                        account_orders = pd.DataFrame(account_history)
+
+                        account_order_history_dict = {}
+                        for index, row in account_orders.iterrows():
+                            order_id = row['orderId']
+                            side = row['side']
+                            qty = row['qty']
+                            account_order_history_dict[order_id] = {'side': side, 'qty': qty}
+
+
+                        if len(order_details.keys()) > 0:
+                            if order_details['orderId'] in  list(account_orders['orderId']):
+                                side = account_order_history_dict[order_details['orderId']]['side']
+                                qty = account_order_history_dict[order_details['orderId']]['qty']
+                                price = order_details['price']
+
+                                if side == 'BUY':
+                                    client.futures_create_order(
+                                        symbol=f'{coin}USDT',
+                                        price=round(price,current_trade.round_price),
+                                        side='SELL',
+                                        positionSide='LONG',
+                                        quantity=float(qty),
+                                        timeInForce='GTC',
+                                        type='LIMIT',
+                                        # reduceOnly=True,cc
+                                        closePosition=False,
+                                        # stopPrice=round(take_profit,2),
+                                        workingType='MARK_PRICE',
+                                        priceProtect=True
+                                    )
+                                else:
+                                    client.futures_create_order(
+                                        symbol=f'{coin}USDT',
+                                        price=round(price,current_trade.round_price),
+                                        side='BUY',
+                                        positionSide='SHORT',
+                                        quantity=float(qty),
+                                        timeInForce='GTC',
+                                        type='LIMIT',
+                                        # reduceOnly=True,
+                                        closePosition=False,
+                                        # stopPrice=round(take_profit,2),
+                                        workingType='MARK_PRICE',
+                                        priceProtect=True
+                                )    
                             
-                            
-
-
-        
-
+                    
+                    dca_check += 1
 
                     funding_check += 1
 
