@@ -358,7 +358,7 @@ async def main(shared_coin,current_trade,master_order_history):
         print(f"Stopping websocket after {60} seconds. {coin}")
         ws.close()
 
-    async def listen(df,current_trade):
+    async def listen(df,current_trade,master_order_history):
         check_for_volatilte_coin = current_trade.check_for_volatilte_coin
 
         coin = current_trade.get_current_coin()
@@ -584,12 +584,12 @@ async def main(shared_coin,current_trade,master_order_history):
             except asyncio.TimeoutError:
                 notifier(f"No message received for the past 30 seconds! for {coin}") 
                 await asyncio.sleep(10)
-                df = await listen(df,current_trade)
+                df = await listen(df,current_trade,master_order_history)
 
             except websockets.ConnectionClosed:
                 notifier("WebSocket connection closed. Attempting to reconnect...")
                 await asyncio.sleep(10)
-                df = await listen(df,current_trade)
+                df = await listen(df,current_trade,master_order_history)
         return df
     
     
@@ -643,7 +643,7 @@ async def main(shared_coin,current_trade,master_order_history):
                 notifier('Could not find quantityPrecision')
 
 
-            df = await listen(df,current_trade)
+            df = await listen(df,current_trade,master_order_history)
         except Exception as e:
             print(f"Error: {e}. Retrying in 10 seconds...")
             notifier(f"Error: {e}. Retrying in 10 seconds...")
