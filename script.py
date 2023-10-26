@@ -532,46 +532,51 @@ async def main(shared_coin,current_trade,master_order_history):
 
 
                         if len(order_details.keys()) > 0:
-                            if order_details['orderId'] in  list(account_orders['orderId']):
+                            try:
+                                if order_details['orderId'] in  list(account_orders['orderId']):
+                                    master_order_history = {}
+                                    side = account_order_history_dict[order_details['orderId']]['side']
+                                    qty = account_order_history_dict[order_details['orderId']]['qty']
+                                    price = order_details['price']
+
+                                    notifier(f'Trying to set a profit limit the order as DCA as hit : {order_details["orderId"]}')
+
+                                    if side == 'BUY':
+                                        client.futures_create_order(
+                                            symbol=f'{coin}USDT',
+                                            price=round(price,current_trade.round_price),
+                                            side='SELL',
+                                            positionSide='LONG',
+                                            quantity=float(qty),
+                                            timeInForce='GTC',
+                                            type='LIMIT',
+                                            # reduceOnly=True,cc
+                                            closePosition=False,
+                                            # stopPrice=round(take_profit,2),
+                                            workingType='MARK_PRICE',
+                                            priceProtect=True
+                                        )
+                                    else:
+                                        client.futures_create_order(
+                                            symbol=f'{coin}USDT',
+                                            price=round(price,current_trade.round_price),
+                                            side='BUY',
+                                            positionSide='SHORT',
+                                            quantity=float(qty),
+                                            timeInForce='GTC',
+                                            type='LIMIT',
+                                            # reduceOnly=True,
+                                            closePosition=False,
+                                            # stopPrice=round(take_profit,2),
+                                            workingType='MARK_PRICE',
+                                            priceProtect=True
+                                    )    
+                                
+                            except Exception as e:
+                                notifier(f'{order_details}')
                                 master_order_history = {}
-                                side = account_order_history_dict[order_details['orderId']]['side']
-                                qty = account_order_history_dict[order_details['orderId']]['qty']
-                                price = order_details['price']
+                                
 
-                                notifier(f'Trying to set a profit limit the order as DCA as hit : {account_orders["orderId"]}')
-
-                                if side == 'BUY':
-                                    client.futures_create_order(
-                                        symbol=f'{coin}USDT',
-                                        price=round(price,current_trade.round_price),
-                                        side='SELL',
-                                        positionSide='LONG',
-                                        quantity=float(qty),
-                                        timeInForce='GTC',
-                                        type='LIMIT',
-                                        # reduceOnly=True,cc
-                                        closePosition=False,
-                                        # stopPrice=round(take_profit,2),
-                                        workingType='MARK_PRICE',
-                                        priceProtect=True
-                                    )
-                                else:
-                                    client.futures_create_order(
-                                        symbol=f'{coin}USDT',
-                                        price=round(price,current_trade.round_price),
-                                        side='BUY',
-                                        positionSide='SHORT',
-                                        quantity=float(qty),
-                                        timeInForce='GTC',
-                                        type='LIMIT',
-                                        # reduceOnly=True,
-                                        closePosition=False,
-                                        # stopPrice=round(take_profit,2),
-                                        workingType='MARK_PRICE',
-                                        priceProtect=True
-                                )    
-                            
-                    
                     dca_check += 1
 
                     funding_check += 1
