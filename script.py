@@ -210,7 +210,7 @@ async def main(shared_coin,current_trade,master_order_history):
                 #before cancelling checking if dca is reached to increase tp position
 
                
-                account_history = client.futures_account_trades(limit=100)
+                account_history = client.futures_account_trades(limit=10)
                 account_orders = pd.DataFrame(account_history)
 
                 account_order_history_dict = {}
@@ -237,38 +237,42 @@ async def main(shared_coin,current_trade,master_order_history):
                             qty = account_order_history_dict[order_id[0]]['qty']
                             price = order_id[1]
 
-                            if side == 'BUY':
-                                client.futures_create_order(
-                                    symbol=f'{coin}USDT',
-                                    price=round(price,current_trade.round_price),
-                                    side='SELL',
-                                    positionSide='LONG',
-                                    quantity=float(qty),
-                                    timeInForce='GTC',
-                                    type='LIMIT',
-                                    # reduceOnly=True,cc
-                                    closePosition=False,
-                                    # stopPrice=round(take_profit,2),
-                                    workingType='MARK_PRICE',
-                                    priceProtect=True
+                            notifier(f'Trying to close orderID : {order_id[0]}')
+                            try:
+                                if side == 'BUY':
+                                    client.futures_create_order(
+                                        symbol=f'{coin}USDT',
+                                        price=round(price,current_trade.round_price),
+                                        side='SELL',
+                                        positionSide='LONG',
+                                        quantity=float(qty),
+                                        timeInForce='GTC',
+                                        type='LIMIT',
+                                        # reduceOnly=True,cc
+                                        closePosition=False,
+                                        # stopPrice=round(take_profit,2),
+                                        workingType='MARK_PRICE',
+                                        priceProtect=True
+                                    )
+                                else:
+                                    client.futures_create_order(
+                                        symbol=f'{coin}USDT',
+                                        price=round(price,current_trade.round_price),
+                                        side='BUY',
+                                        positionSide='SHORT',
+                                        quantity=float(qty),
+                                        timeInForce='GTC',
+                                        type='LIMIT',
+                                        # reduceOnly=True,
+                                        closePosition=False,
+                                        # stopPrice=round(take_profit,2),
+                                        workingType='MARK_PRICE',
+                                        priceProtect=True
                                 )
-                            else:
-                                client.futures_create_order(
-                                    symbol=f'{coin}USDT',
-                                    price=round(price,current_trade.round_price),
-                                    side='BUY',
-                                    positionSide='SHORT',
-                                    quantity=float(qty),
-                                    timeInForce='GTC',
-                                    type='LIMIT',
-                                    # reduceOnly=True,
-                                    closePosition=False,
-                                    # stopPrice=round(take_profit,2),
-                                    workingType='MARK_PRICE',
-                                    priceProtect=True
-                               )
 
-
+                            except Exception as e:
+                                notifier('Error in closing order, when trying to increase the profit limit, when trend has changed')
+                                master_order_history = {}
 
 
 
@@ -281,6 +285,7 @@ async def main(shared_coin,current_trade,master_order_history):
                             notifier(f'Order id : DCA order : {order_id[0]} is cancelled as trend changed')
                         except Exception as e:
                             notifier('DCAed so cannot cannel as order is already filled')
+                            master_order_history = {}
 
             
 
@@ -520,7 +525,7 @@ async def main(shared_coin,current_trade,master_order_history):
                                 'price' : sell_keys
                             }
 
-                        account_history = client.futures_account_trades(limit=100)
+                        account_history = client.futures_account_trades(limit=10)
                         account_orders = pd.DataFrame(account_history)
 
                         account_order_history_dict = {}
@@ -575,7 +580,7 @@ async def main(shared_coin,current_trade,master_order_history):
                             except Exception as e:
                                 notifier(f'{order_details}')
                                 master_order_history = {}
-                                
+
 
                     dca_check += 1
 
@@ -667,7 +672,7 @@ def main_execution():
     check_for_volatilte_coin = 1
     master_order_history = {}
 
-    timeframe = '1m'
+    timeframe = '3m'
     print(f"Your timeframe of {timeframe} has been confirmed.")
 
     current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin,use_sl = 0)
