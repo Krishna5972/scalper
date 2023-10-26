@@ -662,7 +662,7 @@ def main_execution():
     check_for_volatilte_coin = 1
     master_order_history = {}
 
-    timeframe = '3m'
+    timeframe = '1m'
     print(f"Your timeframe of {timeframe} has been confirmed.")
 
     current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin,use_sl = 0)
