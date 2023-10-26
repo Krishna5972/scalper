@@ -23,7 +23,6 @@ from functions import *
 
 async def main(shared_coin,current_trade,master_order_history):
 
-     
     telegram_auth_token='5515290544:AAG9T15VaY6BIxX2VYX8x2qr34aC-zVEYMo'
     telegram_group_id='notifier2_scanner_bot_link'
 
@@ -427,11 +426,6 @@ async def main(shared_coin,current_trade,master_order_history):
                 super_df=supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
                 df_copy = df.copy()
                 trade_df=create_signal_df(super_df,df_copy,coin,timeframe,atr1,period,100,100)
-
-
-                close_any_open_positions(coin,client)
-                cancel_all_open_orders(coin,client)
-                
         
         stream = get_stream(coin, timeframe)
         current_trade.is_spot = is_spot_available(coin)
@@ -489,6 +483,7 @@ async def main(shared_coin,current_trade,master_order_history):
                                
                     if len(dca_orders) > 0:
                         for order_id in dca_orders:
+                            notifier(f'Trying to cancel the order with ID : {order_id}')
                             try:
                                 client.futures_cancel_order(symbol=f'{coin}USDT', orderId=order_id)
                                 notifier(f'Order id : {order_id} is cancelled')
@@ -542,6 +537,8 @@ async def main(shared_coin,current_trade,master_order_history):
                                 side = account_order_history_dict[order_details['orderId']]['side']
                                 qty = account_order_history_dict[order_details['orderId']]['qty']
                                 price = order_details['price']
+
+                                notifier(f'Trying to set a profit limit the order as DCA as hit : {account_orders["orderId"]}')
 
                                 if side == 'BUY':
                                     client.futures_create_order(
@@ -665,7 +662,7 @@ def main_execution():
     check_for_volatilte_coin = 1
     master_order_history = {}
 
-    timeframe = '1m'
+    timeframe = '3m'
     print(f"Your timeframe of {timeframe} has been confirmed.")
 
     current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin,use_sl = 0)
