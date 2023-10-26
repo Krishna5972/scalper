@@ -129,8 +129,8 @@ async def main(shared_coin,current_trade,master_order_history):
 
             super_df = pivot_super_df
 
-            notifier(f'short term Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
-            notifier(f'short term Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
+            # notifier(f'short term Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
+            # notifier(f'short term Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
 
             print(f'Len of shorttem {pivot_super_df.shape[0]}')
 
@@ -180,8 +180,8 @@ async def main(shared_coin,current_trade,master_order_history):
 
             notifier(f'Candle closed {coin} : {timeframe}')
 
-            notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
-            notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
+            # notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
+            # notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
 
             
             if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long): 
@@ -196,7 +196,7 @@ async def main(shared_coin,current_trade,master_order_history):
                 dca_order_ids = []
       
 
-                for coin, order_types in master_order_history.items():
+                for c, order_types in master_order_history.items():
                     for order_type, take_profits in order_types.items():
                         for take_profit in list(take_profits.keys()):
                             for limit_order_id in list(take_profits[take_profit].keys()):
@@ -538,6 +538,7 @@ async def main(shared_coin,current_trade,master_order_history):
 
                         if len(order_details.keys()) > 0:
                             if order_details['orderId'] in  list(account_orders['orderId']):
+                                master_order_history = {}
                                 side = account_order_history_dict[order_details['orderId']]['side']
                                 qty = account_order_history_dict[order_details['orderId']]['qty']
                                 price = order_details['price']
@@ -664,7 +665,7 @@ def main_execution():
     check_for_volatilte_coin = 1
     master_order_history = {}
 
-    timeframe = '3m'
+    timeframe = '1m'
     print(f"Your timeframe of {timeframe} has been confirmed.")
 
     current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin,use_sl = 0)
