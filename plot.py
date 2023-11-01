@@ -12,6 +12,7 @@ from email import encoders
 from email.mime.text import MIMEText
 import time
 import calendar
+import trade_config
 
 
 def convert_timestamp_to_utc(timestamp_in_milliseconds):
@@ -118,9 +119,9 @@ def plot_day_over_day(df):
 
     plt.show()
 
-def send_mail(filename, subject='SARAVANA BHAVA'):
+def send_mail(filename, subject='SARAVANA BHAVA',to = 'vamsikrishnagannamaneni@gmail.com'):
     from_ = 'gannamanenilakshmi1978@gmail.com'
-    to = 'vamsikrishnagannamaneni@gmail.com'
+   
 
     message = MIMEMultipart()
     message['From'] = from_
@@ -148,7 +149,7 @@ def send_mail(filename, subject='SARAVANA BHAVA'):
     print(f'Sent {filename}')
 
 
-initial_capital = 60
+initial_capital = trade_config.stake
 client=Client(config.api_key,config.secret_key)
 
 daily_PNL = pd.read_csv('daily_pnl.csv')
@@ -160,6 +161,6 @@ daily_PNL['Percentage Change'] = (daily_PNL['PNL']/initial_capital) * 100
 daily_PNL.drop_duplicates(subset=['Date'],inplace=True,keep='last')
 daily_PNL.to_csv('daily_pnl.csv',index = False)
 plot_day_over_day(daily_PNL)
-send_mail("daily_change.png")
+send_mail("daily_change.png",to=trade_config.email)
         
     
