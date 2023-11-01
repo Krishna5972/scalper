@@ -1,3 +1,3 @@
 stake = 60
-timeframe = '3m'
+timeframe = '5m'
 initial_stake = 60 #for ploting
