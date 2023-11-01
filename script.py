@@ -119,7 +119,9 @@ async def main(shared_coin,current_trade):
                 return df
             df_copy = df.copy()
 
-            pivot_st = PivotSuperTrendConfiguration(period = 1, atr_multiplier = 1, pivot_period = 1)
+            pivot_st = PivotSuperTrendConfiguration(period = trade_config.short_term_period, 
+                                                    atr_multiplier = trade_config.short_term_atr_multiplier, 
+                                                    pivot_period = trade_config.short_term_pivot_period)
             pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
             pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
             current_pivot_signal = pivot_signal
@@ -127,8 +129,8 @@ async def main(shared_coin,current_trade):
 
             super_df = pivot_super_df
 
-            notifier(f'short term Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
-            notifier(f'short term Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
+            # notifier(f'short term Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
+            # notifier(f'short term Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
 
             upperband_1 = pivot_super_df.iloc[-1]['upperband']
             lowerband_1 = pivot_super_df.iloc[-1]['lowerband']
@@ -145,7 +147,9 @@ async def main(shared_coin,current_trade):
             #trade_df = create_signal_df(super_df,df,coin,timeframe,atr1,period,100,100)
 
             
-            pivot_st = PivotSuperTrendConfiguration(period = 3, atr_multiplier = 3, pivot_period = 3)
+            pivot_st = PivotSuperTrendConfiguration(period = trade_config.long_term_period,
+                                                     atr_multiplier = trade_config.long_term_atr_multiplier, 
+                                                     pivot_period = trade_config.long_term_pivot_period)     
             pivot_super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
             pivot_signal = get_pivot_supertrend_signal(pivot_super_df)
             current_pivot_signal = pivot_signal
@@ -177,10 +181,10 @@ async def main(shared_coin,current_trade):
             upperband_15m = pivot_super_df_15m.iloc[-1]['upperband']
             lowerband_15m = pivot_super_df_15m.iloc[-1]['lowerband']
 
-            notifier(f'Candle closed : {timeframe}')
+            notifier(f'Candle closed {coin}: {timeframe} Stream : {current_trade.stream}')
 
-            notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
-            notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
+            # notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
+            # notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
 
             
             if (current_signal_short != prev_signal_short) or (current_signal_long != prev_signal_long): 
@@ -324,7 +328,9 @@ async def main(shared_coin,current_trade):
 
                 current_trade.round_quantity = round_quantity
                 
-                pivot_st = PivotSuperTrendConfiguration(period = 1, atr_multiplier = 1, pivot_period = 1)
+                pivot_st = PivotSuperTrendConfiguration(period = trade_config.short_term_period,
+                                                         atr_multiplier = trade_config.short_term_atr_multiplier, 
+                                                         pivot_period = trade_config.short_term_pivot_period)
 
                 super_df=supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
                 df_copy = df.copy()

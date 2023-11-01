@@ -1075,3 +1075,8 @@ AttributeError: 'NoneType' object has no attribute 'send'
 2023-10-23 09:22:00,403 - ERROR - Task was destroyed but it is pending!
 task: <Task pending name='Task-1274' coro=<WebSocketCommonProtocol.close_connection() done, defined at C:\Users\vamsi\AppData\Roaming\Python\Python39\site-packages\websockets\legacy\protocol.py:1273> wait_for=<Future pending cb=[<TaskWakeupMethWrapper object at 0x00000267E6931190>()]> cb=[_gather.<locals>._done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:767, shield.<locals>._inner_done_callback() at C:\ProgramData\Anaconda3\lib\asyncio\tasks.py:890]>
 2023-11-01 05:08:53,800 - INFO - Data fetched successfully
+2023-11-01 08:10:56,639 - INFO - Data fetched successfully
+2023-11-01 08:18:34,622 - INFO - Data fetched successfully
+2023-11-01 08:22:37,189 - INFO - Data fetched successfully
+2023-11-01 08:23:01,164 - INFO - Data fetched successfully
+2023-11-01 08:26:24,631 - INFO - Data fetched successfully
