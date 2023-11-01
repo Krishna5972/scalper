@@ -11,6 +11,7 @@ from email.mime.multipart import MIMEMultipart
 from email import encoders
 from email.mime.text import MIMEText
 import time
+import calendar
 
 
 def convert_timestamp_to_utc(timestamp_in_milliseconds):
@@ -35,10 +36,26 @@ def get_pnl(income_history,yesterday = 1):
     df_PNL = df[df['incomeType']=='REALIZED_PNL']
     
     PNL = df_PNL.groupby('utc_time').agg(aggregations).reset_index()
-    if yesterday == 1:
-        yesterday = datetime.utcnow().day - 1
+
+    
+
+    today = datetime.utcnow()
+    if today.day == 1:
+        last_month = today.month - 1 if today.month > 1 else 12
+        last_month_year = today.year if today.month > 1 else today.year - 1
+        yesterday = calendar.monthrange(last_month_year, last_month)[1]
     else:
-        yesterday = datetime.utcnow().day
+        yesterday = today.day - 1
+
+    if today.month == 3 and today.day == 1:
+        is_leap = calendar.isleap(today.year - 1)
+        yesterday = 29 if is_leap else 28
+
+
+    # if yesterday == 1:
+    #     yesterday = datetime.utcnow().day - 1
+    # else:
+    #     yesterday = datetime.utcnow().day
     
     yesterday_df = PNL[PNL['date']== yesterday]
     df_commission_yesterday = df_commission[df_commission['date']==yesterday]
@@ -131,16 +148,16 @@ def send_mail(filename, subject='SARAVANA BHAVA'):
     print(f'Sent {filename}')
 
 
-initial_capital = 385
+initial_capital = 60
 client=Client(config.api_key,config.secret_key)
 
 daily_PNL = pd.read_csv('daily_pnl.csv')
-income_history = client.futures_income_history(limit = 500)
+income_history = client.futures_income_history(limit = 1000)
 now = datetime.utcnow() - timedelta(days=1)
 new_row = pd.DataFrame({'Date': [now.strftime('%d-%m-%Y')], 'PNL': [get_pnl(income_history)]})
 daily_PNL = pd.concat([daily_PNL, new_row], ignore_index=True)
 daily_PNL['Percentage Change'] = (daily_PNL['PNL']/initial_capital) * 100
-daily_PNL.drop_duplicates(subset=['Date'],inplace=True)
+daily_PNL.drop_duplicates(subset=['Date'],inplace=True,keep='last')
 daily_PNL.to_csv('daily_pnl.csv',index = False)
 plot_day_over_day(daily_PNL)
 send_mail("daily_change.png")

@@ -447,7 +447,7 @@ def run_async_main(shared_coin,current_trade):
 
 
 def main_execution():
-    coin = input("Please enter the coin name: ")
+    coin = "BTC"
     coin = coin.upper()
     stake = 404
     check_for_volatilte_coin = 1
