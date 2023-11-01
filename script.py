@@ -330,9 +330,6 @@ async def main(shared_coin,current_trade):
                 df_copy = df.copy()
                 trade_df=create_signal_df(super_df,df_copy,coin,timeframe,atr1,period,100,100)
 
-
-                close_any_open_positions(coin,client)
-                cancel_all_open_orders(coin,client)
                 
         
         stream = get_stream(coin, timeframe)
