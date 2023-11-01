@@ -12,6 +12,7 @@ from email import encoders
 from email.mime.text import MIMEText
 import time
 import calendar
+import trade_config
 
 
 def convert_timestamp_to_utc(timestamp_in_milliseconds):
@@ -148,7 +149,7 @@ def send_mail(filename, subject='SARAVANA BHAVA'):
     print(f'Sent {filename}')
 
 
-initial_capital = 60
+initial_capital =trade_config.initial_stake
 client=Client(config.api_key,config.secret_key)
 
 daily_PNL = pd.read_csv('daily_pnl.csv')

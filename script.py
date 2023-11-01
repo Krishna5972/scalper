@@ -16,6 +16,7 @@ import json
 import asyncio
 from modules import *
 from multiprocessing import Process, Manager
+import  trade_config
 
 
 from functions import *
@@ -449,10 +450,10 @@ def run_async_main(shared_coin,current_trade):
 def main_execution():
     coin = "BTC"
     coin = coin.upper()
-    stake = 404
+    stake = trade_config.stake
     check_for_volatilte_coin = 1
 
-    timeframe = '3m'
+    timeframe = trade_config.timeframe
     print(f"Your timeframe of {timeframe} has been confirmed.")
 
     current_trade = CurrentTrade(coin=coin,timeframe=timeframe,stake=stake,check_for_volatilte_coin=check_for_volatilte_coin,use_sl = 0)
