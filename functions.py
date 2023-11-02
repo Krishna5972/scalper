@@ -1543,9 +1543,13 @@ def get_most_volatile_coin_d(shared_coin):
         print('Fetching volatile data')
         data = get_scaner_data(sleep_time=3600)
         shared_coin.value = get_coins(data, daily_coin=1)
+
+        with open("volatile_coin.pkl", "wb") as file:
+            pickle.dump(shared_coin.value, file)
+            
         print('Sleeping for a random time')
 
-        if 0 <= current_hour < 6:
+        if 0 < current_hour < 6:
             sleep_for_random_time(min_time=300, max_time=360)
         else:
             sleep_for_random_time(min_time=300, max_time=660)

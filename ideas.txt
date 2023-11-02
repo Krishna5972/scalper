@@ -11,9 +11,9 @@ Find the coin that recently did a extended shortterm gain/loss and hope for it t
 
 
 
-Entry is retrace, tup is not trend change, instead a limit order of initial upperband, and sl being longterm trend change
+Entry is retrace, set RR at 3:1 not change entry to intial SL and from 2:1
 
-position sizing depends on 15m long term
+
 
 
 

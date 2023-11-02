@@ -451,7 +451,9 @@ def run_async_main(shared_coin,current_trade):
 
 
 def main_execution():
-    coin = "BTC"
+    with open("volatile_coin.pkl", "rb") as file:
+        loaded_volatile_coin = pickle.load(file)
+    coin = loaded_volatile_coin
     coin = coin.upper()
     stake = trade_config.stake
     check_for_volatilte_coin = 1
