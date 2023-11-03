@@ -81,6 +81,23 @@ async def main(shared_coin,current_trade):
         if symbol['symbol'] == f"{coin}USDT":
             round_quantity = symbol['quantityPrecision']
             break
+
+    stream = get_stream(coin, timeframe)
+    current_trade.is_spot = is_spot_available(coin)
+    if 'fstream' in stream:
+        current_trade.stream = 'futures'
+    else:
+        current_trade.stream = 'spot'
+
+    
+    
+    if current_trade.stream == 'futures':
+        df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
+    else:
+        df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
+
+    
+    df = df.tail(330).reset_index(drop=True)
     
 
     try:
@@ -286,6 +303,15 @@ async def main(shared_coin,current_trade):
                 str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
                 end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
 
+                df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
+
+                
+                x_str = str(df['close'].iloc[-1])
+                decimal_index = x_str.find('.')
+                round_price = len(x_str) - decimal_index - 1
+
+                current_trade.round_price = round_price
+
                 stream = get_stream(coin, timeframe)
                 current_trade.is_spot = is_spot_available(coin)
                 if 'fstream' in stream:
@@ -293,14 +319,7 @@ async def main(shared_coin,current_trade):
                 else:
                     current_trade.stream = 'spot'
 
-                df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
-
-                df = df.tail(330).reset_index(drop=True)
-                x_str = str(df['close'].iloc[-1])
-                decimal_index = x_str.find('.')
-                round_price = len(x_str) - decimal_index - 1
-
-                current_trade.round_price = round_price
+                
                 
                 if current_trade.stream == 'futures':
                     df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
@@ -308,6 +327,7 @@ async def main(shared_coin,current_trade):
                     df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
 
                 
+                df = df.tail(330).reset_index(drop=True)
 
                 usdt_leverage,busd_leverage = 25,25
 
