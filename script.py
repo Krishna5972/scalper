@@ -292,11 +292,8 @@ async def main(shared_coin,current_trade):
                     current_trade.stream = 'futures'
                 else:
                     current_trade.stream = 'spot'
-                
-                if current_trade.stream == 'futures':
-                    df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
-                else:
-                    df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
+
+                df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
 
                 df = df.tail(330).reset_index(drop=True)
                 x_str = str(df['close'].iloc[-1])
@@ -304,6 +301,13 @@ async def main(shared_coin,current_trade):
                 round_price = len(x_str) - decimal_index - 1
 
                 current_trade.round_price = round_price
+                
+                if current_trade.stream == 'futures':
+                    df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
+                else:
+                    df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
+
+                
 
                 usdt_leverage,busd_leverage = 25,25
 
@@ -405,6 +409,16 @@ async def main(shared_coin,current_trade):
                 current_trade.stream = 'futures'
             else:
                 current_trade.stream = 'spot'
+
+
+            df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
+
+            x_str = str(df['close'].iloc[-1])
+            decimal_index = x_str.find('.')
+            round_price = len(x_str) - decimal_index - 1
+
+            current_trade.round_price = round_price
+            
             
             if current_trade.stream == 'futures':
                 df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
@@ -413,11 +427,7 @@ async def main(shared_coin,current_trade):
         
             df= df.tail(330).reset_index(drop=True)
 
-            x_str = str(df['close'].iloc[-1])
-            decimal_index = x_str.find('.')
-            round_price = len(x_str) - decimal_index - 1
-
-            current_trade.round_price = round_price
+           
 
             exchange_info = client.futures_exchange_info()
 
