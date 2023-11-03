@@ -91,10 +91,19 @@ async def main(shared_coin,current_trade,master_order_history):
         current_trade.round_quantity = 0
         notifier('Could not find quantityPrecision')
 
-    if get_funding(coin) > -0.005:
-        df=dataextract(coin,str_date,end_str,timeframe,client)
+    stream = get_stream(coin, timeframe)
+    current_trade.is_spot = is_spot_available(coin)
+    if 'fstream' in stream:
+        current_trade.stream = 'futures'
+    else:
+        current_trade.stream = 'spot'
+    
+    if current_trade.stream == 'futures':
+        df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
+    else:
+        df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
 
-        df= df.tail(330).reset_index(drop=True)
+    df= df.tail(330).reset_index(drop=True)
     df_copy = df.copy()
     pivot_st = PivotSuperTrendConfiguration()
     super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
@@ -385,6 +394,17 @@ async def main(shared_coin,current_trade,master_order_history):
                 str_date = (datetime.now()- timedelta(days=days_to_get_candles)).strftime('%b %d,%Y')
                 end_str = (datetime.now() +  timedelta(days=3)).strftime('%b %d,%Y')
 
+                df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
+
+                df= df.tail(330).reset_index(drop=True)
+
+
+                x_str = str(df['close'].iloc[-1])
+                decimal_index = x_str.find('.')
+                round_price = len(x_str) - decimal_index - 1
+
+                current_trade.round_price = round_price
+
                 stream = get_stream(coin, timeframe)
                 current_trade.is_spot = is_spot_available(coin)
                 if 'fstream' in stream:
@@ -397,12 +417,10 @@ async def main(shared_coin,current_trade,master_order_history):
                 else:
                     df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
 
-                df = df.tail(330).reset_index(drop=True)
-                x_str = str(df['close'].iloc[-1])
-                decimal_index = x_str.find('.')
-                round_price = len(x_str) - decimal_index - 1
+                df= df.tail(330).reset_index(drop=True)
 
-                current_trade.round_price = round_price
+
+                
 
                 usdt_leverage,busd_leverage = 25,25
 
@@ -615,6 +633,16 @@ async def main(shared_coin,current_trade,master_order_history):
 
             notifier(f'Met with an error now getting data for coin : {coin}')
 
+            df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
+
+            
+
+            x_str = str(df['close'].iloc[-1])
+            decimal_index = x_str.find('.')
+            round_price = len(x_str) - decimal_index - 1
+
+            current_trade.round_price = round_price
+
             stream = get_stream(coin, timeframe)
             current_trade.is_spot = is_spot_available(coin)
             if 'fstream' in stream:
@@ -628,12 +656,6 @@ async def main(shared_coin,current_trade,master_order_history):
                 df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
         
             df= df.tail(330).reset_index(drop=True)
-
-            x_str = str(df['close'].iloc[-1])
-            decimal_index = x_str.find('.')
-            round_price = len(x_str) - decimal_index - 1
-
-            current_trade.round_price = round_price
 
             exchange_info = client.futures_exchange_info()
 
