@@ -57,15 +57,17 @@ class Order:
         client.futures_create_order(symbol=f'{self.coin}USDT', side='BUY', type='MARKET', quantity=self.quantity, dualSidePosition=True, positionSide='LONG')
 
         
-        if big_profit == 0:
-            price = self.entry - (self.entry * 0.0114)
-            self.take_profit = self.entry+((self.entry*0.06))
-        else:
-            price = self.entry - (self.entry * 0.024)
-            self.take_profit = self.entry+((self.entry*0.024))
+        
+        price = self.entry - (self.entry * 0.0114)
+        dca_2 = self.entry - (self.entry * 0.033)
+        self.take_profit = self.entry+((self.entry*0.06))
+     
 
 
         rounded_price = round(price, self.round_price)
+        dca_2 = round(dca_2, self.round_price)
+
+        #dca_1
         client.futures_create_order(
             symbol=f'{self.coin}USDT',
             side='BUY',
@@ -77,6 +79,18 @@ class Order:
             dualSidePosition=True
         )
 
+
+        #dca_2
+        client.futures_create_order(
+            symbol=f'{self.coin}USDT',
+            side='BUY',
+            type='LIMIT',
+            price=dca_2,
+            quantity=self.quantity,
+            timeInForce='GTC',
+            positionSide='LONG',
+            dualSidePosition=True
+        )
         #notifier(f'Placing tp order at {round(self.take_profit, self.round_price)}')
         
         client.futures_create_order(
@@ -108,21 +122,36 @@ class Order:
                                         positionSide='SHORT'
                                     )
         
-        if big_profit == 0:
-            price = self.entry + (self.entry * 0.014)
-            self.take_profit = self.entry-((self.entry*0.06))
-        else:
-            price = self.entry + (self.entry * 0.024)
-            self.take_profit = self.entry-((self.entry*0.024))
+        
+        price = self.entry + (self.entry * 0.014)
+        dca_2 = self.entry + (self.entry * 0.033)
+        self.take_profit = self.entry-((self.entry*0.06))
+        
 
 
 
         rounded_price = round(price, self.round_price)
+        dca_2 = round(dca_2, self.round_price)
+
+        #dca_1
         client.futures_create_order(
             symbol=f'{self.coin}USDT',
             side='SELL',
             type='LIMIT',
             price=rounded_price,
+            quantity=self.quantity,
+            timeInForce='GTC',
+            positionSide='SHORT',
+            dualSidePosition=True
+        )
+
+
+        #dca_2
+        client.futures_create_order(
+            symbol=f'{self.coin}USDT',
+            side='SELL',
+            type='LIMIT',
+            price=dca_2,
             quantity=self.quantity,
             timeInForce='GTC',
             positionSide='SHORT',
