@@ -214,7 +214,15 @@ async def main(shared_coin,current_trade):
                 lowerband = get_lowerband(super_df)
                 upperband = get_upperband(super_df)
                 
-                #stake = get_stake(super_df,client,risk)
+                time_now = datetime.utcnow()
+                hour = time_now.hour
+
+                if hour > 12:
+                    notifier('Reducing the stake as its after 12 UTC')
+                    stake = trade_config.stake/2
+                else:  
+                    stake = trade_config.stake
+
                 
                 quantity = round(stake/entry, current_trade.round_quantity)
                 partial_profit_take = round(quantity/2,current_trade.round_quantity) 
