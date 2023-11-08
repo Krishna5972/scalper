@@ -66,7 +66,7 @@ async def main(shared_coin,current_trade):
 
     df=dataextract(coin,str_date,end_str,timeframe,client,futures=1)
 
-    df= df.tail(330).reset_index(drop=True)
+    df= df.tail(600).reset_index(drop=True)
 
 
     x_str = str(df['close'].iloc[-1])
@@ -97,7 +97,7 @@ async def main(shared_coin,current_trade):
         df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
 
     
-    df = df.tail(330).reset_index(drop=True)
+    df = df.tail(600).reset_index(drop=True)
     
 
     try:
@@ -109,7 +109,7 @@ async def main(shared_coin,current_trade):
     if get_funding(coin) > -0.005:
         df=dataextract(coin,str_date,end_str,timeframe,client)
 
-        df= df.tail(330).reset_index(drop=True)
+        df= df.tail(600).reset_index(drop=True)
     df_copy = df.copy()
     pivot_st = PivotSuperTrendConfiguration()
     super_df = supertrend_pivot(coin, df_copy, pivot_st.period, pivot_st.atr_multiplier, pivot_st.pivot_period)
@@ -128,7 +128,7 @@ async def main(shared_coin,current_trade):
     async def on_message(message,df,current_trade):
         data = json.loads(message)
         coin = current_trade.get_current_coin()
-        if data['k']['x'] == True:
+        if data['k']['x'] == False:
             
             df = get_latest_df(data, df)
             if df.shape[0] < 40:
@@ -145,6 +145,7 @@ async def main(shared_coin,current_trade):
             prev_pivot_signal = get_prev_pivot_supertrend_signal(pivot_super_df)
 
             super_df = pivot_super_df
+            super_df_short = pivot_super_df
 
             # notifier(f'short term Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
             # notifier(f'short term Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
@@ -213,9 +214,15 @@ async def main(shared_coin,current_trade):
                 #over_all_trend = get_over_all_trend(coin)
                 lowerband = get_lowerband(super_df)
                 upperband = get_upperband(super_df)
-                
+
                 time_now = datetime.utcnow()
                 hour = time_now.hour
+
+                trade_df=create_signal_df(super_df_short,df_copy,coin,timeframe,atr1,period,100,100)
+                
+                
+                
+                
 
                 if hour > 12:
                     notifier('Reducing the stake as its after 12 UTC')
@@ -223,11 +230,19 @@ async def main(shared_coin,current_trade):
                 else:  
                     stake = trade_config.stake
 
+                if trade_df.shape[0] > 3:
+                    prev_trade_perc = trade_df.iloc[-2]['percentage']
+                    
+                    if prev_trade_perc > 0:
+                        notifier('Increasing the stake as previous was a win')
+                        stake = trade_config.stake * 2
+
                 
                 quantity = round(stake/entry, current_trade.round_quantity)
                 partial_profit_take = round(quantity/2,current_trade.round_quantity) 
                 
 
+                
 
           
                 
@@ -335,7 +350,7 @@ async def main(shared_coin,current_trade):
                     df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
 
                 
-                df = df.tail(330).reset_index(drop=True)
+                df = df.tail(600).reset_index(drop=True)
 
                 usdt_leverage,busd_leverage = 25,25
 
@@ -355,7 +370,7 @@ async def main(shared_coin,current_trade):
                 if get_funding(coin) > -0.0005:
                     df=dataextract(coin,str_date,end_str,timeframe,client)
 
-                    df = df.tail(330).reset_index(drop=True)
+                    df = df.tail(6000).reset_index(drop=True)
                 df_copy = df.copy()
 
                 current_trade.round_quantity = round_quantity
@@ -453,7 +468,7 @@ async def main(shared_coin,current_trade):
             else:
                 df=dataextract(coin,str_date,end_str,timeframe,client,futures=0)
         
-            df= df.tail(330).reset_index(drop=True)
+            df= df.tail(600).reset_index(drop=True)
 
            
 
