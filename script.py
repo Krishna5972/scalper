@@ -128,7 +128,7 @@ async def main(shared_coin,current_trade):
     async def on_message(message,df,current_trade):
         data = json.loads(message)
         coin = current_trade.get_current_coin()
-        if data['k']['x'] == False:
+        if data['k']['x'] == True:
             
             df = get_latest_df(data, df)
             if df.shape[0] < 40:
