@@ -199,7 +199,6 @@ async def main(shared_coin,current_trade):
             upperband_15m = pivot_super_df_15m.iloc[-1]['upperband']
             lowerband_15m = pivot_super_df_15m.iloc[-1]['lowerband']
 
-            notifier(f'Candle closed {coin}: {timeframe} Stream : {current_trade.stream}')
 
             # notifier(f'Previous lowerband : {get_prev_lowerband(super_df)} ,Previous  upperband : {get_prev_upperband(super_df)}')
             # notifier(f'Current lowerband : {get_lowerband(super_df)} ,Current  upperband : {get_upperband(super_df)}')
@@ -222,20 +221,25 @@ async def main(shared_coin,current_trade):
                 
                 
                 
-                
+                stake_notifier = None
 
                 if hour > 12:
-                    notifier('Reducing the stake as its after 12 UTC')
+                    print('Reducing the stake as its after 12 UTC')
                     stake = trade_config.stake/2
+                    stake_notifier = "HourLimited"
                 else:  
                     stake = trade_config.stake
+                    stake_notifier = "NotLimited"
 
+
+                prev_trade_perc = 0
                 if trade_df.shape[0] > 3:
                     prev_trade_perc = trade_df.iloc[-2]['percentage']
                     
-                    if prev_trade_perc > 0:
-                        notifier('Increasing the stake as previous was a win')
+                    if prev_trade_perc > 0.033:
+                        print('Increasing the stake as previous was a win')
                         stake = trade_config.stake * 2
+                        stake_notifier = "Doubled"
 
                 
                 quantity = round(stake/entry, current_trade.round_quantity)
@@ -257,26 +261,31 @@ async def main(shared_coin,current_trade):
                             )
                        
 
+                made_order = 0
                 if current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Buy':
                     order.make_buy_trade(client) 
                     notifier(f'ShortTerm : Sell , LongTerm : Buy , Long15m : Buy => Bought')
+                    made_order = 1
 
                 elif current_signal_short == 'Sell' and current_signal_long == 'Buy' and long_signal_15m =='Sell':
                     order.quantity = round(order.quantity/2,current_trade.round_quantity)
                     order.make_buy_trade(client) 
                     notifier(f'ShortTerm : Sell , LongTerm : Buy , Long15m : Sell => Bought with less amount')
+                    made_order = 1
 
                 elif current_signal_short == 'Buy' and current_signal_long == 'Sell' and long_signal_15m =='Sell':
                     order.make_sell_trade(client)
                     notifier(f'ShortTerm : Buy , LongTerm : Sell  , Long15m : Sell => Sold')
+                    made_order = 1
 
                 elif current_signal_short == 'Buy' and current_signal_long == 'Sell' and long_signal_15m =='Buy':
                     order.quantity = round(order.quantity/2,current_trade.round_quantity)
                     order.make_sell_trade(client)
                     notifier(f'ShortTerm : Buy , LongTerm : Sell  , Long15m : Buy => Sold with less amount')
+                    made_order = 1
                 
 
-
+                
                     
                 # elif pivot_signal == 'Sell' and signal == 'Buy':
                 #     order.quantity = round(order.quantity/2, current_trade.round_quantity)
@@ -285,11 +294,24 @@ async def main(shared_coin,current_trade):
                 else:
                     notifier(f'Waiting Patiently to strike.....')      
             
-            
+                notifier(f'Candle closed {coin}: {timeframe} Stream : {current_trade.stream}')
+
+                if made_order == 1:
+                    if stake_notifier == "Doubled":
+                        notifier(f"Doubled Stake as previous was win {round(prev_trade_perc,4)}")
+                    elif stake_notifier == "HourLimited":
+                        notifier("Decreased Stake as this is after 12 UTC ")
+                    elif stake_notifier == "NotLimited":
+                        notifier("Normal stake")
+
+                
+
                
 
 
-        
+            else:
+                notifier(f'Candle closed {coin}: {timeframe} Stream : {current_trade.stream}')
+
         
         return df
 
