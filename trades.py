@@ -34,7 +34,6 @@ aggregations = {
 
 PNL = df.groupby('orderId').agg(aggregations).reset_index()
 PNL = PNL.sort_values(by = 'utc_time').reset_index(drop=True)
-PNL = PNL[PNL['maker']!=True]
 PNL['utc_time'] = PNL['utc_time'].shift(1)
 PNL = PNL[PNL['realizedPnl']!=0]
 PNL = PNL.sort_values(by = 'utc_time').reset_index(drop=True)
