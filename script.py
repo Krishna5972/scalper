@@ -242,6 +242,8 @@ async def main(shared_coin,current_trade):
                         stake_notifier = "Doubled"
 
                 
+                stake = stake * trade_config.stake_multipler
+
                 quantity = round(stake/entry, current_trade.round_quantity)
                 partial_profit_take = round(quantity/2,current_trade.round_quantity) 
                 
