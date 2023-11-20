@@ -1,5 +1,7 @@
 import pandas as pd
 from functions import notifier
+from datetime import datetime
+
 
 stake = 600
 timeframe = '5m'
@@ -25,7 +27,11 @@ df['month'] = df['utc_time'].dt.month
 
 df_PNL = df.groupby(['year','month','date']).agg({'realizedPnl' : 'sum'}).reset_index()
 
-yesterdays_PNL = df_PNL.iloc[-1]['realizedPnl']
+now = datetime.utcnow()
+
+yesterday_day = now.day - 1
+
+yesterdays_PNL = df_PNL[df_PNL['date']==yesterday_day].iloc[-1]['realizedPnl']
 
 if yesterdays_PNL < 0:
     stake_multipler = 1.32
