@@ -17,5 +17,5 @@ days_to_get_candles = 5
 
 #krishna5972
 
-api = '2T2nbzEwdkA3l3prN2jjpQMkXJskxNoGuFKLuFleUGve3yUEhqj5Q4U2vAoZU2vJ'
+api_key = '2T2nbzEwdkA3l3prN2jjpQMkXJskxNoGuFKLuFleUGve3yUEhqj5Q4U2vAoZU2vJ'
 secret_key = 'CuMJObIapXXKJsTFmRKkjgtti0n1MqDh5EKXUWkGKnobskHbS7vZTTuNaYQaZ4aW'
