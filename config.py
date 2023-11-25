@@ -1,6 +1,6 @@
 # #local
-# api_key='ge5i1VBXjCy3eNEvLuPEABcUMEvzOFla0iU7AkeIqo5OADiijC596GBF7opUAxJv'
-# secret_key='Sl0uIdRWjrEn1ngBlkjHnWzvNUzZ5Z3guG9i9A3vLPbcqqFsqHHHtSpRqZk4V17k'
+api_key='ge5i1VBXjCy3eNEvLuPEABcUMEvzOFla0iU7AkeIqo5OADiijC596GBF7opUAxJv'
+secret_key='Sl0uIdRWjrEn1ngBlkjHnWzvNUzZ5Z3guG9i9A3vLPbcqqFsqHHHtSpRqZk4V17k'
 
 
 
@@ -17,5 +17,5 @@ days_to_get_candles = 5
 
 #krishna5972
 
-api_key = '2T2nbzEwdkA3l3prN2jjpQMkXJskxNoGuFKLuFleUGve3yUEhqj5Q4U2vAoZU2vJ'
-secret_key = 'CuMJObIapXXKJsTFmRKkjgtti0n1MqDh5EKXUWkGKnobskHbS7vZTTuNaYQaZ4aW'
+# api_key = '2T2nbzEwdkA3l3prN2jjpQMkXJskxNoGuFKLuFleUGve3yUEhqj5Q4U2vAoZU2vJ'
+# secret_key = 'CuMJObIapXXKJsTFmRKkjgtti0n1MqDh5EKXUWkGKnobskHbS7vZTTuNaYQaZ4aW'

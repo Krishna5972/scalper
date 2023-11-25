@@ -850,6 +850,47 @@ def close_any_open_positions(coin,client):
         notifier(f'No positions to close : {coin}')
 
 
+
+
+
+def get_open_symbols():
+    open_orders = client.futures_get_open_orders()
+    if len(open_orders) > 0:
+        open_orders_df = pd.DataFrame(open_orders)[['symbol','price','origQty','side','positionSide','time']]
+    else:
+        print('No open orders')
+        open_orders_df = pd.DataFrame(columns = ['symbol','price','origQty','side','positionSide','time'])
+        
+    return set(open_orders_df['symbol'])
+
+def get_open_position_symbols():
+    positions = client.futures_position_information()
+    columns = ['symbol','entryPrice','breakEvenPrice','unRealizedProfit','liquidationPrice','leverage','notional',
+                        'positionSide']
+    open_position_df  = pd.DataFrame(columns = columns)
+    open_positions = []
+    for position in positions:
+        if float(position['positionAmt']) != 0:  # Filters out positions that are not open (position amount is not zero)
+            open_positions.append(position)
+    if open_positions is not None:
+        open_position_df = pd.DataFrame(open_positions)
+    
+    return set(open_position_df['symbol'])
+    
+   
+def cancel_void_stopmarket_orders():
+    symbols_in_open_orders = get_open_symbols()
+    symbols_in_position = get_open_position_symbols()
+    closed_symbols = symbols_in_open_orders - symbols_in_position
+    for coin in closed_symbols:
+        coin = coin.split('USDT')[0]
+        cancel_all_open_orders(coin,client)
+
+
+
+
+
+
 def cancel_all_open_orders(coin,client):
     orders = client.futures_get_open_orders(symbol=f'{coin}USDT')
     for order in orders:
@@ -1578,6 +1619,13 @@ def change_leverage(coin,max_usdt_leverage,max_busd_leverage):
         notifier(f'Met with exception {e}, sleeping for 5 minutes and trying again')
 
 
+def is_leverage_changed(coin_config, coin_config_updated):
+    for coin in coin_config:
+        if coin_config[coin]['leverage'] != coin_config_updated[coin]['leverage']:
+            return True
+    return False
+
+    
 def is_spot_available(coin):
     available = 0
     try:

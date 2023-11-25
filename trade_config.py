@@ -3,14 +3,14 @@ from functions import notifier
 from datetime import datetime
 
 
-stake = 33
+stake = 330
 timeframe = '5m'
-initial_stake = 33 #for ploting
+initial_stake = 330 #for ploting
 
 #short term
-short_term_period = 1
-short_term_atr_multiplier = 1
-short_term_pivot_period = 1
+short_term_period = 2
+short_term_atr_multiplier = 2
+short_term_pivot_period = 2
 
 #long_term
 
@@ -33,8 +33,8 @@ yesterday_day = now.day - 1
 
 yesterdays_PNL = df_PNL[df_PNL['date']==yesterday_day].iloc[-1]['realizedPnl']
 
-if yesterdays_PNL < 0:
-    stake_multipler = 1.32
+if yesterdays_PNL > 0:
+    stake_multipler = 2
 else:
     stake_multipler = 1
 
