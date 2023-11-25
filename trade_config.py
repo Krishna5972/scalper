@@ -31,7 +31,10 @@ now = datetime.utcnow()
 
 yesterday_day = now.day - 1
 
-yesterdays_PNL = df_PNL[df_PNL['date']==yesterday_day].iloc[-1]['realizedPnl']
+try:
+    yesterdays_PNL = df_PNL[df_PNL['date']==yesterday_day].iloc[-1]['realizedPnl']
+except Exception as e:
+    yesterdays_PNL = 0
 
 if yesterdays_PNL > 0:
     stake_multipler = 2
