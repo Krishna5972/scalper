@@ -1067,7 +1067,7 @@ def save_to_csv(coin, start_time, filename="volatile_coins.csv"):
 def notifier_with_photo(file_path, caption, tries=25):
     telegram_api_url = f'https://api.telegram.org/bot{telegram_auth_token}/sendPhoto'
     files = {'photo': open(file_path, 'rb')}
-    data = {'chat_id': f'@{telegram_group_id}', 'caption': caption}
+    data = {'chat_id': f'{telegram_group_id}', 'caption': caption}
 
     for try_num in range(tries):
         tel_resp = requests.post(telegram_api_url, files=files, data=data)
