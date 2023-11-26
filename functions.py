@@ -68,8 +68,8 @@ def get_max_leverage(coin: str, api_key: str, secret_key: str):
 
 
 
-telegram_auth_token = '5515290544:AAG9T15VaY6BIxX2VYX8x2qr34aC-zVEYMo'
-telegram_group_id = 'notifier2_scanner_bot_link'
+telegram_auth_token = config.telegram_auth_token
+telegram_group_id = config.telegram_group_id
 
 import requests
 import time
@@ -85,7 +85,7 @@ def get_dc_signal(entry, middle_dc, current_signal):
 def notifier(message, tries=5, base_sleep=1):
     telegram_api_url = f'https://api.telegram.org/bot{telegram_auth_token}/sendMessage'
     data = {
-        'chat_id': f'@{telegram_group_id}',
+        'chat_id': f'{telegram_group_id}',  #remove @ for some recent bots
         'text': message
     }
     

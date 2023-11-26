@@ -9,6 +9,9 @@ period = 20
 atr1 = 10
 days_to_get_candles = 5
 
+telegram_auth_token= '6839748807:AAEKe-1WgS8FZP0Z0-t78YQrLtE7415Vtsw'
+telegram_group_id = '-4046511967'
+
 
 #aws
 # api_key='gZw5UczZ2TUsBS4XTGcgvyQSZBccQo8NuaKdxlu9hn5jMwHTZryAVhxpRcfdbCJq'
