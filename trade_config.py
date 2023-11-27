@@ -3,9 +3,9 @@ from functions import notifier
 from datetime import datetime
 
 
-stake = 330
+stake = 33
 timeframe = '5m'
-initial_stake = 330 #for ploting
+initial_stake = 33 #for ploting
 
 #short term
 short_term_period = 2
