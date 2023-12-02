@@ -1,6 +1,6 @@
-# #local
-api_key='ge5i1VBXjCy3eNEvLuPEABcUMEvzOFla0iU7AkeIqo5OADiijC596GBF7opUAxJv'
-secret_key='Sl0uIdRWjrEn1ngBlkjHnWzvNUzZ5Z3guG9i9A3vLPbcqqFsqHHHtSpRqZk4V17k'
+# # #local
+# api_key='ge5i1VBXjCy3eNEvLuPEABcUMEvzOFla0iU7AkeIqo5OADiijC596GBF7opUAxJv'
+# secret_key='Sl0uIdRWjrEn1ngBlkjHnWzvNUzZ5Z3guG9i9A3vLPbcqqFsqHHHtSpRqZk4V17k'
 
 
 
@@ -22,3 +22,11 @@ telegram_group_id = '-4046511967'
 
 # api_key = '2T2nbzEwdkA3l3prN2jjpQMkXJskxNoGuFKLuFleUGve3yUEhqj5Q4U2vAoZU2vJ'
 # secret_key = 'CuMJObIapXXKJsTFmRKkjgtti0n1MqDh5EKXUWkGKnobskHbS7vZTTuNaYQaZ4aW'
+
+
+
+#jayanth
+
+api_key = 'snUtZCV8W0j2mQhGXtNyXFA1wse4MQxMebFMRBc5qq8xcBHymVN0SShyIC2fRYTz'
+secret_key = 'B5YSNEYmlmdoQjmUYyfleBxuDnz4WeNe99lDvXn4QP4bz21Fqx5kkarNQZGBF93P'
+email = 'jayanth2552.yennana@gmail.com'

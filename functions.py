@@ -1023,7 +1023,7 @@ def get_last_coin_from_csv(file_name):
 
 def send_mail(filename, subject='SARAVANA BHAVA'):
     from_ = 'gannamanenilakshmi1978@gmail.com'
-    to = 'vamsikrishnagannamaneni@gmail.com'
+    to = config.email
 
     message = MIMEMultipart()
     message['From'] = from_

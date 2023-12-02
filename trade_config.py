@@ -3,14 +3,14 @@ from functions import notifier
 from datetime import datetime
 
 
-stake = 33
+stake = 60
 timeframe = '5m'
-initial_stake = 33 #for ploting
+initial_stake = 60 #for ploting
 
 #short term
-short_term_period = 2
-short_term_atr_multiplier = 2
-short_term_pivot_period = 2
+short_term_period = 1
+short_term_atr_multiplier = 1
+short_term_pivot_period = 1
 
 #long_term
 
